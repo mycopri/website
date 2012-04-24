@@ -1,0 +1,58 @@
+/* $Id: ie7-fixes.css 6564 2010-02-25 00:50:03Z chris $ */
+
+/* IE7 */
+
+
+/* Primary menu */
+#primary-menu ul.sf-menu li ul.menu li,
+#primary-menu ul.menu li ul.menu li {
+  line-height: 115%;
+}
+
+#primary-menu ul.sf-menu li ul.menu li a:link,
+#primary-menu ul.sf-menu li ul.menu li a:visited,
+#primary-menu ul.menu li:hover ul.menu li a:link,
+#primary-menu ul.menu li:hover ul.menu li a:visited,
+#primary-menu ul.menu li.hover ul.menu li a:link,
+#primary-menu ul.menu li.hover ul.menu li a:visited {
+  background: none;
+  display: block;
+  padding: 5px;
+}
+
+#primary-menu ul.sf-menu li ul.menu li a:hover,
+#primary-menu ul.sf-menu li ul.menu li a:focus,
+#primary-menu ul.menu li:hover ul.menu li a:hover,
+#primary-menu ul.menu li.hover ul.menu li a:hover {
+  background: #A3CFE1;
+  color: #000;
+  display: block;
+  text-decoration: none;
+}
+
+/* Margins */
+#preface-top-inner {
+  margin-bottom: 1.5em;
+}
+
+#main,
+.content-group-inner,
+.content-top-inner,
+.postscript-top-inner,
+.postscript-bottom-inner {
+  padding-bottom: 1.5em;
+}
+
+/* Lists */
+.content-inner .content ul li {
+  list-style-image: url(../images/list-style-arrow-ie.png);
+}
+
+/* Search */
+#search-box.block {
+  width: 230px;
+}
+
+#search-box input#search_header {
+  padding: 2px 0px;
+}

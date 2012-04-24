@@ -1,0 +1,194 @@
+@charset "utf-8";
+/* CSS Document */
+
+
+/* Global Layout */
+	body {
+		padding:0;
+		margin:0;
+		font-family: Arial, Helvetica, sans-serif;
+		font-size:12px;
+		background-color:#38383A;
+		color: #5E5642;
+	}
+	
+	.student_header{
+		width:1000px;
+		height:377px;
+		background:url("../images/student-days-2010-header.jpg") no-repeat scroll 0 0 transparent;
+	}
+	
+	a {
+		outline: none;
+	}
+	img {
+		border: none;
+	}
+	table.sd_container{
+		padding:0;
+		margin:0 auto;
+		border-collapse:collapse;
+		width:1000px;
+	}
+	table.sd_container td {
+		padding:0;
+		margin:0;
+	}
+
+/* Modified CSS */
+
+	#main {
+		background: #D1C3A0;
+		padding: 0;
+	}
+	
+	.header-logo {
+	  position: absolute;
+	  top: 190px;
+	  left: -60px
+	}
+	
+	#primary-menu ul.menu li a:link,
+	#primary-menu ul.menu li a:visited {
+	    color: #E49F02;
+	}
+	
+	.content-inner .content ul li {
+	    list-style-image:url("../images/emblem-certified.png");
+	}
+	
+	a, a:link, a:visited {
+	    color: blue;
+	}
+	
+	.row {
+	    overflow-x: auto;
+	}
+
+    #left_header {
+        width: 157px;
+        height: 123px;
+        float: left;
+        background: url("../images/left-header.gif") no-repeat scroll 0 0 transparent;
+    }
+
+    .fill_header {
+        background: url("../images/fill-header.png") repeat-x scroll 0 0 transparent;
+    }
+
+    #right_header {
+        width: 177px;
+        height: 123px;
+        float: right;
+        background: url("../images/right-header.gif") no-repeat scroll 0 0 transparent;
+    }
+
+
+/* Start original css */
+/* Main Navigation */
+	td.main_nav{
+		font-size:12px;
+		width: 235px;
+		text-transform: uppercase;
+		vertical-align: top;
+	}
+	.main_nav a {
+		color:#D5AF00;
+		text-decoration: none;
+		font-weight: bold;
+	}
+	.main_nav a:hover {
+		color: #fff;
+	}
+	
+	ul.main_links /* Adds the spacing from the top of the Main Navigation column */{
+		margin:70px 0 0 30px;
+	}
+	
+	ul.asce_links /* Adds the spacing in between link sections and to the bottom of the Main Navigation column */ {
+		margin:55px 0 0 30px;
+	}
+	
+	ul.main_links, ul.asce_links {
+		list-style:none;
+	}
+	ul.main_links li, ul.asce_links li /* Each link has 14px in between */{
+		padding: 7px 0 7px 0;
+	}
+/* Logos */	
+	td.logos{
+		vertical-align: bottom;
+	}
+	td.logos img.ci_logo {
+		display: block;
+		width: 97px;
+		height: 129px;
+		margin: 60px auto 10px auto;
+	}
+	td.logos img.asce_logo {
+		display: block;
+		height:52px;
+		width: 144px;
+		margin: 0 auto;
+	}
+	
+/* Main Content */
+	td.content a {
+		color: #9E5F26;
+		text-decoration:none;
+	}
+	td.content a:hover {
+		text-decoration:underline;
+	}
+	td.content a:active {
+		color: #5E5642;
+	}
+	
+	div.content_main {
+		padding: 50px 20px;
+	}
+	
+	td.content h1 {
+		color: #38383A;
+	}
+	td.content h2 {
+		color: #9E5F26;
+	}
+	
+	td.right_side{
+		width:74px;
+	}
+	td.space{
+		height:20px;
+	}
+	
+	
+/* Footer Areas */
+	.bottom_left {
+		background:none repeat scroll 0 0 #38383A;
+	}
+	.bottom_middle {
+		background:none repeat scroll 0 0 #D1C3A0;
+	}
+	.bottom_right {
+		background:none repeat scroll 0 0 #38383A;
+	}
+	
+	.bottom_middle img {
+		display: block;
+		width: 580px;
+		height: 1px;
+		margin: 0 auto 20px auto;
+	}
+	
+	p.contact_info {
+		font-size:10px;
+		margin:20px;
+		text-align:center;
+		white-space:nowrap;
+	}
+
+	.footer {
+		background: #38383A;
+		/* height: 75px; */ 
+	}

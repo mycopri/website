@@ -1,0 +1,140 @@
+; $Id: fusion_freshstart.info 6688 2010-03-09 17:12:56Z jeremy $
+
+name = Fusion Fresh Start
+description = Fusion Fresh Start sub-theme for Drupal 6.
+base theme = fusion_core
+core = 6.x
+engine = phptemplate
+
+stylesheets[all][] = css/fusion-freshstart-style.css
+
+scripts[] = js/fusion-freshstart-script.js
+
+regions[sidebar_first] = sidebar first
+regions[sidebar_last] = sidebar last
+regions[header_top] = header top
+regions[header] = header
+regions[preface_top] = preface top
+regions[preface_bottom] = preface bottom
+regions[content_top] = content top
+regions[content] = content
+regions[content_bottom] = content bottom
+regions[postscript_top] = postscript top
+regions[postscript_bottom] = postscript bottom
+regions[footer] = footer
+regions[node_top] = node top
+regions[node_bottom] = node bottom
+
+features[] = logo
+features[] = name
+features[] = slogan
+features[] = node_user_picture
+features[] = comment_user_picture
+features[] = search
+features[] = favicon
+features[] = primary_links
+features[] = secondary_links
+
+; Default theme settings
+settings[theme_grid] = grid12-960
+settings[theme_grid_options][] = grid12-960
+settings[theme_grid_options][] = grid12-fluid
+settings[fluid_grid_width] = fluid-100
+settings[theme_font_size] = font-size-14
+settings[sidebar_layout] = sidebars-split
+settings[sidebar_first_width] = 4
+settings[sidebar_last_width] = 4
+
+; Inherit Skinr styles from parent themes
+skinr[options][inherit_skins] = true
+
+; Disable 16 column grid block widths inherited from fusion_core
+skinr[grid16-width] =
+
+; Fresh Start styles
+skinr[freshstart-general-styles][title] = Fresh Start - General Styles
+skinr[freshstart-general-styles][type] = checkboxes
+skinr[freshstart-general-styles][features][] = block
+skinr[freshstart-general-styles][features][] = panels_display
+skinr[freshstart-general-styles][features][] = panels_pane
+skinr[freshstart-general-styles][features][] = panels_panel
+skinr[freshstart-general-styles][features][] = views_view
+skinr[freshstart-general-styles][options][1][label] = <span class="preview-text">List/menu with arrows: add list/menu style with arrow bullets and background shading on hover <span class="preview-icon" id="list-menu-arrow-skinrpreview"></span></span>
+skinr[freshstart-general-styles][options][1][class] = list-menu-arrow
+skinr[freshstart-general-styles][options][2][label] = <span class="preview-text">Image borders: add thick gray border on images <span class="preview-icon" id="image-border-skinrpreview"></span></span>
+skinr[freshstart-general-styles][options][2][class] = image-border
+
+; Fresh Start color styles
+skinr[freshstart-color-styles][title] = Fresh Start - Color Styles
+skinr[freshstart-color-styles][type] = radios
+skinr[freshstart-color-styles][features][] = block
+skinr[freshstart-color-styles][features][] = panels_display
+skinr[freshstart-color-styles][features][] = panels_pane
+skinr[freshstart-color-styles][features][] = panels_panel
+skinr[freshstart-color-styles][features][] = views_view
+skinr[freshstart-color-styles][options][1][label] = <span class="preview-text">Light blue: light blue background and blue title <span class="preview-icon" id="color-blue-light-skinrpreview"></span></span>
+skinr[freshstart-color-styles][options][1][class] = color-blue-light
+skinr[freshstart-color-styles][options][2][label] = <span class="preview-text">Light green: light green background and green title <span class="preview-icon" id="color-green-light-skinrpreview"></span></span>
+skinr[freshstart-color-styles][options][2][class] = color-green-light
+skinr[freshstart-color-styles][options][3][label] = <span class="preview-text">Blue: bright blue background, dark blue title, and large white text <span class="preview-icon" id="color-blue-dark-skinrpreview"></span></span>
+skinr[freshstart-color-styles][options][3][class] = color-blue-dark color-bright
+skinr[freshstart-color-styles][options][4][label] = <span class="preview-text">Green: bright green background, dark green title, and large white text <span class="preview-icon" id="color-green-dark-skinrpreview"></span></span>
+skinr[freshstart-color-styles][options][4][class] = color-green-dark color-bright
+skinr[freshstart-color-styles][options][5][label] = <span class="preview-text">Orange: bright orange background, dark orange title, and large white text <span class="preview-icon" id="color-orange-skinrpreview"></span></span>
+skinr[freshstart-color-styles][options][5][class] = color-orange color-bright
+skinr[freshstart-color-styles][options][6][label] = <span class="preview-text">Gray: gray gradient background and border <span class="preview-icon" id="color-gradient-gray-skinrpreview"></span></span>
+skinr[freshstart-color-styles][options][6][class] = color-gradient-gray
+skinr[freshstart-color-styles][options][7][label] = <span class="preview-text">Full width banner: leaves and plant in hand background, large text in overlay <span class="preview-icon" id="color-leaves-skinrpreview"></span></span> 
+skinr[freshstart-color-styles][options][7][class] = color-leaves
+skinr[freshstart-color-styles][options][8][label] = <span class="preview-text">Full width banner: CI, large text in overlay <span class="preview-icon" id="color-ci-skinrpreview"></span></span> 
+skinr[freshstart-color-styles][options][8][class] = color-ci
+skinr[freshstart-color-styles][options][9][label] = <span class="preview-text">Full width banner: COPRI, large text in overlay <span class="preview-icon" id="color-copri-skinrpreview"></span></span> 
+skinr[freshstart-color-styles][options][9][class] = color-copri
+skinr[freshstart-color-styles][options][10][label] = <span class="preview-text">Full width banner: EWRI, large text in overlay <span class="preview-icon" id="color-ewri-skinrpreview"></span></span> 
+skinr[freshstart-color-styles][options][10][class] = color-ewri
+
+; Fresh Start block title icon styles
+skinr[freshstart-block-title-icon-styles][title] = Fresh Start - Block Title Icon Styles
+skinr[freshstart-block-title-icon-styles][type] = select
+skinr[freshstart-block-title-icon-styles][features][] = block
+skinr[freshstart-block-title-icon-styles][features][] = panels_display
+skinr[freshstart-block-title-icon-styles][features][] = panels_pane
+skinr[freshstart-block-title-icon-styles][features][] = panels_panel
+skinr[freshstart-block-title-icon-styles][features][] = views_view
+skinr[freshstart-block-title-icon-styles][options][1][label] = Alert
+skinr[freshstart-block-title-icon-styles][options][1][class] = icon-alert block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][2][label] = Calendar
+skinr[freshstart-block-title-icon-styles][options][2][class] = icon-calendar block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][3][label] = Comment bubbles
+skinr[freshstart-block-title-icon-styles][options][3][class] = icon-comment-bubbles block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][4][label] = Gear
+skinr[freshstart-block-title-icon-styles][options][4][class] = icon-gear block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][5][label] = Home
+skinr[freshstart-block-title-icon-styles][options][5][class] = icon-home block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][6][label] = ID
+skinr[freshstart-block-title-icon-styles][options][6][class] = icon-id block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][7][label] = Newspaper
+skinr[freshstart-block-title-icon-styles][options][7][class] = icon-newspaper block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][8][label] = Paint
+skinr[freshstart-block-title-icon-styles][options][8][class] = icon-paint block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][9][label] = Paper
+skinr[freshstart-block-title-icon-styles][options][9][class] = icon-paper block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][10][label] = Photo
+skinr[freshstart-block-title-icon-styles][options][10][class] = icon-photo block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][11][label] = RSS
+skinr[freshstart-block-title-icon-styles][options][11][class] = icon-rss block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][12][label] = Search
+skinr[freshstart-block-title-icon-styles][options][12][class] = icon-search block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][13][label] = Tools
+skinr[freshstart-block-title-icon-styles][options][13][class] = icon-tools block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][14][label] = User
+skinr[freshstart-block-title-icon-styles][options][14][class] = icon-user block-icon-wrapper
+skinr[freshstart-block-title-icon-styles][options][15][label] = Notebook
+skinr[freshstart-block-title-icon-styles][options][15][class] = icon-notebook block-icon-wrapper
+
+; Information added by fusiondrupalthemes.com packaging script on 2010-05-06
+version = 6.x-1.2
+project = fusion_freshstart
+datestamp = 1273179611
+project status url = http://updates.fusiondrupalthemes.com/release-history
+
