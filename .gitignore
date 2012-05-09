@@ -32,8 +32,8 @@ xmlrpc.php
 #/includes
 /misc
 /modules     
-/profiles
+#/profiles
 /scripts
-/themes
+#/themes
 
 >>>>>>> b5c1a0b15726b3b07900a20e84ae7fe316b184a0
