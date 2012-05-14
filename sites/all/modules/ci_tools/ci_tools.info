@@ -1,0 +1,5 @@
+; $Id$
+name = CI Tools
+description = "Provides various tools for development"
+package = "ASCE - ci"
+core = 7.x
