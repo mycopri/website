@@ -1,0 +1,119 @@
+/* $Id: views.css,v 1.11.2.3 2010/03/12 00:25:33 merlinofchaos Exp $ */
+.asce-mod-1 {
+	position: relative;
+}
+
+.views-field-image-image {
+	float: left;
+}
+
+.asce-mod-1 .views-field-title {
+  font-size: 160%;
+  line-height: 130%;
+}
+
+
+/* From ASCE website */
+
+.ImgCaptMain{
+  width: 1150;
+  position:relative;
+}
+
+.ImgCaptDescBox{
+  position:absolute;
+  bottom:0px;
+  /* since it's positioned absolutely it will need a width, but not height,
+       that would fill the entire box covering the image */
+  width:100%;
+}
+
+.ImgCaptDescBg{
+    background:#333333;
+    filter:alpha(opacity=70);
+    -moz-opacity:0.7;
+    -khtml-opacity: 0.7;
+    opacity: 0.9;
+    width:100%;
+} 
+
+.ImgCaptDesc{
+  padding:5px;
+  color:#fff;
+  font-weight:normal;
+  font-family:Arial;
+  font-size: 12px;
+  text-align:left;
+}
+.ImgCaptDesc h2
+{
+  font-size:16px;
+  font-weight:bold;
+  padding: 0px;
+  margin: 5px 0px;
+  vertical-align:middle;
+}
+
+.ImgCaptDesc a
+{
+  color:#fff;
+  font-weight:bold;
+}
+.ImgCaptDesc a:hover
+{
+  
+  text-decoration:underline;
+}
+
+.program-border {
+	padding: 1em .25em .25em .25em;
+	margin-top: .25em;
+	border-collapse: separate;
+	border-spacing: .25em;
+	border-style: solid;
+	border-width: thin;
+}
+
+.views-field-title {
+  margin-bottom: 1em;
+}
+
+.views-field-picture {
+  clear: right;
+  float: right;
+  padding-left: 1em;
+}
+
+.views-field-name {
+  clear: right;
+  float: right;
+  padding-left: 1em;
+ }
+
+.views-field-field-event-author-title-value {
+  clear: right;
+  float: right;
+  padding-left: 1em;
+  margin-bottom: .25em;  
+}
+
+.views-field-title-1 {
+  clear: right;
+  float: right;
+  padding-left: 1em;
+  margin-bottom: .25em;  
+}
+
+ .picture-box {
+  clear: right;
+  float: right;
+  padding-left: 1em;
+  margin-bottom: .25em;
+ }
+ 
+ .picture-box .picture {
+  clear: right;
+  float: right;
+  padding-left: 1em;
+  margin-right: 0em;
+}
