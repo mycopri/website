@@ -1,1 +1,0 @@
-[14-May-2012 17:32:06] PHP Fatal error:  Call to undefined function  entityreference_get_behavior_handlers() in /home/institut/public_html/drupal7/sites/all/modules/entityreference/entityreference.install on line 44
