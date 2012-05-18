@@ -205,7 +205,7 @@ $databases = array (
   array (
     'default' => 
     array (
-      'database' => 'institut_study_mycopri',
+      'database' => 'institut_d7ci',
       'username' => 'institut_new',
       'password' => 'taeyoun',
       'host' => 'localhost',
