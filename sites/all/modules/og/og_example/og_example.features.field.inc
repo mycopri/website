@@ -5,7 +5,7 @@
  */
 
 /**
- * Implements hook_field_default_fields().
+ * Implementation of hook_field_default_fields().
  */
 function og_example_field_default_fields() {
   $fields = array();
@@ -116,14 +116,13 @@ function og_example_field_default_fields() {
         ),
       ),
       'deleted' => '0',
-      'description' => 'Determine if this is an OG group.',
+      'description' => t('Determine if this is an OG group.'),
+      'display_label' => 1,
       'display' => array(
         'default' => array(
           'label' => 'above',
           'module' => 'og_ui',
-          'settings' => array(
-            'field_name' => FALSE,
-          ),
+          'settings' => array(),
           'type' => 'og_group_subscribe',
           'weight' => '0',
         ),
@@ -134,11 +133,9 @@ function og_example_field_default_fields() {
           'weight' => 0,
         ),
       ),
-      'display_label' => 1,
       'entity_type' => 'node',
       'field_name' => 'group_group',
       'label' => 'Group',
-      'required' => FALSE,
       'settings' => array(
         'user_register_form' => FALSE,
       ),
@@ -156,10 +153,7 @@ function og_example_field_default_fields() {
       ),
       'widget' => array(
         'module' => 'options',
-        'settings' => array(
-          'display_label' => 0,
-          'og_hide' => TRUE,
-        ),
+        'settings' => array(),
         'type' => 'options_onoff',
         'weight' => 0,
       ),
@@ -205,7 +199,7 @@ function og_example_field_default_fields() {
           'module' => 'text',
           'settings' => array(),
           'type' => 'text_default',
-          'weight' => '1',
+          'weight' => 1,
         ),
         'teaser' => array(
           'label' => 'hidden',
@@ -239,11 +233,87 @@ function og_example_field_default_fields() {
     ),
   );
 
+  // Exported field: 'node-post-group_audience'
+  $fields['node-post-group_audience'] = array(
+    'field_config' => array(
+      'active' => '1',
+      'cardinality' => '-1',
+      'deleted' => '0',
+      'entity_types' => array(),
+      'field_name' => 'group_audience',
+      'foreign keys' => array(),
+      'indexes' => array(
+        'gid' => array(
+          0 => 'gid',
+        ),
+      ),
+      'module' => 'og',
+      'no_ui' => TRUE,
+      'settings' => array(),
+      'translatable' => '0',
+      'type' => 'group',
+    ),
+    'field_instance' => array(
+      'bundle' => 'post',
+      'default_value' => NULL,
+      'deleted' => '0',
+      'description' => '',
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'module' => 'og',
+          'settings' => array(),
+          'type' => 'og_list_default',
+          'weight' => 0,
+        ),
+        'teaser' => array(
+          'label' => 'above',
+          'settings' => array(),
+          'type' => 'hidden',
+          'weight' => 0,
+        ),
+      ),
+      'entity_type' => 'node',
+      'field_name' => 'group_audience',
+      'label' => 'Groups audience',
+      'required' => FALSE,
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'view modes' => array(
+        'full' => array(
+          'custom settings' => FALSE,
+          'label' => 'Full',
+          'type' => 'og_list_default',
+        ),
+        'teaser' => array(
+          'custom settings' => FALSE,
+          'label' => 'Teaser',
+          'type' => 'og_list_default',
+        ),
+      ),
+      'widget' => array(
+        'module' => 'og',
+        'settings' => array(
+          'autocomplete_match' => 'contains',
+          'autocomplete_path' => 'group/autocomplete',
+          'minimum_for_autocomplete' => 50,
+          'minimum_for_select_list' => 20,
+          'opt_group' => 'auto',
+          'size' => 60,
+        ),
+        'type' => 'group_audience',
+        'weight' => 0,
+      ),
+      'widget_type' => 'group_audience',
+    ),
+  );
+
   // Translatables
   // Included for use with string extractors like potx.
   t('Body');
-  t('Determine if this is an OG group.');
-  t('Group');
+  t('Group type');
+  t('Groups audience');
 
   return $fields;
 }
