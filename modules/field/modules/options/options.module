@@ -405,11 +405,11 @@ function theme_options_none($variables) {
   $output = '';
   switch ($instance['widget']['type']) {
     case 'options_buttons':
-      $output = t('N/A');
+      $output = t('Select None');
       break;
 
     case 'options_select':
-      $output = ($option == 'option_none' ? t('- None -') : t('- Select a value -'));
+      $output = ($option == 'option_none' ? t('- Select a value -') : t('- Select a value -'));
       break;
   }
 
