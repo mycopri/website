@@ -1,0 +1,7 @@
+; $Id$
+name = ASCE Views integration
+description = "Adds additional filters and fields specific to ASCE Views created."
+package = "ASCE"
+dependencies[] = og
+dependencies[] = views
+core = 6.x

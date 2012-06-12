@@ -1,0 +1,154 @@
+<?php
+// $Id: asce_video_import.module,v 1.21.2.1 2010/08/03 17:43:00 sun Exp $
+
+/**
+ * Implementation of hook_help().
+ */
+function asce_video_import_help($path, $arg) {
+  switch ($path) {
+    case 'admin/content/asce_video_import':
+      $output = '<p>';
+      $output .= t("Import multiple video files and save them as video nodes. The files will be moved from their location into the video module's files directory. Searching for video files in %dirpath.", array(
+        '%dirpath' => realpath(variable_get('asce_video_import_path', '')),
+      ));
+      $output .= '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function asce_video_import_perm() {
+  return array('import asce video');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function asce_video_import_menu() {
+  $items['admin/content/asce_video_import'] = array(
+    'title' => 'Video import',
+    'description' => 'Import video from the filesystem.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_video_import_form'),
+    'file' => 'asce_video_import.pages.inc',
+    'access arguments' => array('import asce video'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/settings/video/asce_video_import'] = array(
+    'title' => 'Video import',
+    'description' => 'Change settings for the ASCE Video Import module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_video_import_admin_settings'),
+    'file' => 'asce_video_import.admin.inc',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/content/test_video_add_node'] = array(
+    'title' => 'Test Add Video Node',
+    'description' => 'This is a developer test to figure out how CCK works.',
+    'page callback' => 'asce_video_node_add',
+    'page arguments' => array('video'),
+    'access callback' => 'node_access',
+    'access arguments' => array('create', 'video'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function asce_video_import_theme() {
+  return array(
+    'asce_video_import_form' => array(
+      'arguments' => array('form'),
+      'file' => 'asce_video_import.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Get details about an image.
+ *
+ * Drupal only supports GIF, JPG and PNG file formats.
+ *
+ * @return
+ *   FALSE, if the file could not be found or is not an image. Otherwise, a
+ *   keyed array containing information about the image:
+ *    'width'     - Width in pixels.
+ *    'height'    - Height in pixels.
+ *    'extension' - Commonly used file extension for the image.
+ *    'mime_type' - MIME type ('image/jpeg', 'image/gif', 'image/png').
+ *    'file_size' - File size in bytes.
+ */
+function asce_video_get_info($file) {
+  if (!is_file($file)) {
+    return FALSE;
+  }
+
+  $details = FALSE;
+  $file_size = @filesize($file);
+
+  if (isset($data) && is_array($data)) {
+    $extensions = array('1' => 'gif', '2' => 'jpg', '3' => 'png');
+    $extension = array_key_exists($data[2], $extensions) ?  $extensions[$data[2]] : '';
+    $details = array('width'     => $data[0],
+                     'height'    => $data[1],
+                     'extension' => $extension,
+                     'file_size' => $file_size,
+                     'mime_type' => $data['mime']);
+  }
+
+  return $details;
+}
+
+/**
+ * Present a node submission form or a set of links to such forms.
+ */
+function asce_video_node_add($type = 'video') {
+  module_load_include('inc', 'node', 'node.pages');
+	global $user;
+
+  $types = node_get_types();
+  $type = isset($type) ? str_replace('-', '_', $type) : NULL;
+  // If a node type has been specified, validate its existence.
+  if (isset($types[$type]) && node_access('create', $type)) {
+    // Initialize settings:
+    $node = array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''), 'type' => $type, 'language' => '');
+
+    drupal_set_title(t('Create @name', array('@name' => $types[$type]->name)));
+    $form_id = $type .'_node_form';
+    // This block of code would be done in drupal_get_form
+    $args[] = $form_id;
+    $args[] = $node;
+    $form_state['post'] = $_POST;
+    // Use a copy of the function's arguments for manipulation
+    $args_temp = $args;
+    $args_temp[0] = &$form_state;
+    array_unshift($args_temp, $form_id);
+
+    $form = call_user_func_array('drupal_retrieve_form', $args_temp);
+    $form_build_id = 'form-'. md5(uniqid(mt_rand(), TRUE));
+    $form['#build_id'] = $form_build_id;
+    // Store a copy of the unprocessed form for caching and indicate that it
+    // is cacheable if #cache will be set.
+    $original_form = $form;
+    $cacheable = TRUE;
+    unset($form_state['post']);
+    $form['#post'] = $_POST;
+    drupal_process_form($form_id, $form, $form_state);
+    //if ((!empty($form_state['storage']) || !empty($form_state['rebuild'])) && !empty($form_state['process_input']) && !form_get_errors()) {
+    	$form = drupal_rebuild_form($form_id, $form_state, $args);
+    //}
+    
+    // End block
+    
+    //$output = drupal_get_form($type .'_node_form', $node);
+  }
+  $output = kpr($form, TRUE);
+  $output .= drupal_render($form);
+  return $output;
+}

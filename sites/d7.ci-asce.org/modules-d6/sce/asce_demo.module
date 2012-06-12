@@ -1,0 +1,332 @@
+<?php
+// $Id$
+
+/*
+ * Implementation of hook_menu().
+ * 
+ * The array of items are as follows:
+ * 
+ * "title": Required. The untranslated title of the menu item.
+ * "title callback": Function to generate the title, defaults to t(). If you require only the raw string to be output, set this to FALSE.
+ * "title arguments": Arguments to send to t() or your custom callback.
+ * "description": The untranslated description of the menu item.
+ * "page callback": The function to call to display a web page when the user visits the path. If omitted, the parent menu item's callback will be used instead.
+ * "page arguments": An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component (see arg()).
+ * "access callback": A function returning a boolean value that determines whether the user has access rights to this menu item. Defaults to user_access() unless a value is inherited from a parent menu item..
+ * "access arguments": An array of arguments to pass to the access callback function. Integer values pass the corresponding URL component.
+ * "file": A file that will be included before the callbacks are accessed; this allows callback functions to be in separate files. The file should be relative to the implementing module's directory unless otherwise specified by the "file path" option.
+ * "file path": The path to the folder containing the file specified in "file". This defaults to the path to the module implementing the hook.
+ * "weight": An integer that determines relative position of items in the menu; higher-weighted items sink. Defaults to 0. When in doubt, leave this alone; the default alphabetical order is usually best.
+ * "menu_name": Optional. Set this to a custom menu if you don't want your item to be placed in Navigation.
+ * "type": A bitmask of flags describing properties of the menu item. Many shortcut bitmasks are provided as constants in menu.inc:
+ *          MENU_NORMAL_ITEM: Normal menu items show up in the menu tree and can be moved/hidden by the administrator.
+ *          MENU_CALLBACK: Callbacks simply register a path so that the correct function is fired when the URL is accessed.
+ *          MENU_SUGGESTED_ITEM: Modules may "suggest" menu items that the administrator may enable.
+ *          MENU_LOCAL_TASK: Local tasks are rendered as tabs by default.
+ *          MENU_DEFAULT_LOCAL_TASK: Every set of local tasks should provide one "default" task, that links to the same path as its parent when clicked.
+ * If the "type" key is omitted, MENU_NORMAL_ITEM is assumed.
+ */
+       
+function asce_demo_menu() {
+	$items['marvin/%'] = array(
+	  'title' => t('Staff Menu'),
+	  //'title callback' => ,
+	  //'title arguments' => ,
+	  'description' => t('Test bed for debugging and tracing.'),
+	  'page callback' => 'asce_demo_page',
+	  'page arguments' => array(1),
+	  //'access callback' => 'asce_staff_access',
+	  'access arguments' => array('access marvin\'s test bed'),
+	  //'file' => 'asce_demo.admin.inc',
+	  //'file path' => ,
+	  //'weight' => ,
+	  'menu_name' => 'Marvin \'s Test Bed',
+	  //'type' => ,
+	);
+  $items['marvin/node_access'] = array(
+    'title' => t('Staff Menu'),
+    //'title callback' => ,
+    //'title arguments' => ,
+    'description' => t('Test bed for debugging and tracing.'),
+    'page callback' => 'asce_demo_node_access_page',
+    //'page arguments' => array(2),
+    //'access callback' => 'asce_staff_access',
+    'access arguments' => array('access marvin test bed'),
+    'file' => 'asce_demo.node_access.inc',
+    //'file path' => ,
+    //'weight' => ,
+    'menu_name' => 'Marvin \'s Test Bed',
+    //'type' => ,
+  );
+  $items['marvin/node_access/%'] = array(
+    'title' => t('Staff Menu'),
+    //'title callback' => ,
+    //'title arguments' => ,
+    'description' => t('Test bed for debugging and tracing.'),
+    'page callback' => 'asce_demo_node_access_page',
+    'page arguments' => array(2),
+    //'access callback' => 'asce_staff_access',
+    'access arguments' => array('access marvin test bed'),
+    'file' => 'asce_demo.node_access.inc',
+    //'file path' => ,
+    //'weight' => ,
+    'menu_name' => 'Marvin \'s Test Bed',
+    //'type' => ,
+  );
+  $items['marvin/clean-menu-tables'] = array(
+    'title' => t('Staff Menu'),
+    //'title callback' => ,
+    //'title arguments' => ,
+    'description' => t('Test bed for debugging and tracing.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_demo_clean_menu_tables_confirm'),
+    //'access callback' => 'asce_staff_access',
+    'access arguments' => array('access marvin test bed'),
+    'file' => 'asce_demo.pages.inc',
+    //'file path' => ,
+    //'weight' => ,
+    'menu_name' => 'Marvin \'s Test Bed',
+    //'type' => ,
+  );
+  $items['marvin/domains'] = array(
+    'title' => t('Fix Domain Settings'),
+    'description' => t('Test bed for debugging and tracing.'),
+    'page callback' => 'asce_demo_domains',
+    'access callback' => 'user_access',
+    'access arguments' => array('access marvin test bed'),
+    'menu name' => 'demo',
+  );
+  $items['marvin/blast-email'] = array(
+    'title' => t('Fix Domain Settings'),
+    'description' => t('Test bed for debugging and tracing.'),
+    'page callback' => 'asce_demo_mail',
+    'access callback' => 'user_access',
+    'access arguments' => array('access marvin test bed'),
+    'menu name' => 'demo',
+  );  
+    
+	return $items;
+}
+
+function asce_demo_perm() {
+	return array('access marvin test bed');
+}
+
+function asce_demo_page($nid) {
+	
+	$node = node_load($nid);
+	drupal_set_message('The node object is loaded: ' . kpr($node, TRUE));
+	$node = node_build_content($node, $teaser, $page);
+	drupal_set_message('node_build_content is called ' . kpr($node, TRUE));
+  
+	$elements = $node->content;
+	//$elements['field_video']['#debug'] = TRUE;
+	$elements['field_video']['field']['items'][0]['#debug'] = TRUE; 
+	$content = asce_demo_drupal_render($elements['field_video']['field']['items'][0]);
+  //$content = asce_demo_drupal_render($node->content);
+  
+  return $content;
+}
+
+/**
+ * Renders HTML given a structured array tree.
+ *
+ * Recursively iterates over each of the array elements, generating HTML code.
+ * This function is usually called from within another function, like
+ * drupal_get_form() or node_view().
+ *
+ * drupal_render() flags each element with a '#printed' status to indicate that
+ * the element has been rendered, which allows individual elements of a given
+ * array to be rendered independently. This prevents elements from being
+ * rendered more than once on subsequent calls to drupal_render() if, for example,
+ * they are part of a larger array. If the same array or array element is passed
+ * more than once to drupal_render(), it simply returns a NULL value.
+ *
+ * @param $elements
+ *   The structured array describing the data to be rendered.
+ * @return
+ *   The rendered HTML.
+ */
+function asce_demo_drupal_render(&$elements) {
+	if ($elements['#debug']) {
+  	$debug = TRUE;
+  	drupal_set_message('Rendering a field_video.' . kpr($elements, TRUE));
+  }
+	//$debug = FALSE;
+  if (!isset($elements) || (isset($elements['#access']) && !$elements['#access'])) {
+    return NULL;
+  }
+
+  // If the default values for this element haven't been loaded yet, populate
+  // them.
+  if (!isset($elements['#defaults_loaded']) || !$elements['#defaults_loaded']) {
+    if ((!empty($elements['#type'])) && ($info = _element_info($elements['#type']))) {
+      $elements += $info;      
+    }
+  }
+  
+  // Make any final changes to the element before it is rendered. This means
+  // that the $element or the children can be altered or corrected before the
+  // element is rendered into the final text.
+  if (isset($elements['#pre_render'])) {
+    foreach ($elements['#pre_render'] as $function) {
+      if (function_exists($function)) {
+        $elements = $function($elements);
+      }
+    }
+  }
+  $content = '';
+  // Either the elements did not go through form_builder or one of the children
+  // has a #weight.
+  if (!isset($elements['#sorted'])) {
+    uasort($elements, "element_sort");
+  }
+  $elements += array('#title' => NULL, '#description' => NULL);
+  if (!isset($elements['#children'])) {
+    $children = element_children($elements);
+    // Render all the children that use a theme function.
+    if (isset($elements['#theme']) && empty($elements['#theme_used'])) {
+      $elements['#theme_used'] = TRUE;
+  
+      $previous = array();
+      foreach (array('#value', '#type', '#prefix', '#suffix') as $key) {
+        $previous[$key] = isset($elements[$key]) ? $elements[$key] : NULL;
+      }
+      // If we rendered a single element, then we will skip the renderer.
+      if (empty($children)) {
+        $elements['#printed'] = TRUE;
+      }
+      else {
+        $elements['#value'] = '';
+      }
+      $elements['#type'] = 'markup';
+
+      unset($elements['#prefix'], $elements['#suffix']);
+      $content = theme($elements['#theme'], $elements);
+
+      foreach (array('#value', '#type', '#prefix', '#suffix') as $key) {
+        $elements[$key] = isset($previous[$key]) ? $previous[$key] : NULL;
+      }
+    }
+    if ($debug) {
+    	drupal_set_message('$children is ' . kpr($children, TRUE));
+    	drupal_set_message('$content is ' . $content);
+    }
+    // Render each of the children using drupal_render and concatenate them.
+    $elements['field']['#debug'] = TRUE;
+    if (!isset($content) || $content === '') {
+      foreach ($children as $key) {
+      	if ($debug) {
+      		drupal_set_message('$elelemts[' . $key . '\']' . kpr($elements[$key], TRUE));
+      	}
+        $content .= drupal_render($elements[$key]);
+      }
+    }
+  }
+  if (isset($content) && $content !== '') {
+    $elements['#children'] = $content;
+  }
+  if ($debug) {
+  	drupal_set_message('Made it past everything.' . kpr($elements, TRUE) . $content);
+  }
+
+  // Until now, we rendered the children, here we render the element itself
+  if (!isset($elements['#printed'])) {
+    $content = theme(!empty($elements['#type']) ? $elements['#type'] : 'markup', $elements);
+    $elements['#printed'] = TRUE;
+  }
+
+  if (isset($content) && $content !== '') {
+    // Filter the outputted content and make any last changes before the
+    // content is sent to the browser. The changes are made on $content
+    // which allows the output'ed text to be filtered.
+    if (isset($elements['#post_render'])) {
+      foreach ($elements['#post_render'] as $function) {
+        if (function_exists($function)) {
+          $content = $function($content, $elements);
+        }
+      }
+    }
+    $prefix = isset($elements['#prefix']) ? $elements['#prefix'] : '';
+    $suffix = isset($elements['#suffix']) ? $elements['#suffix'] : '';
+    return $prefix . $content . $suffix;
+  }
+}
+
+function asce_dsm($debug, $pre_text, $var = NULL) {
+	if ($debug) {
+	  drupal_set_message($pre_text . kpr($var, TRUE));
+	}
+}
+
+function asce_demo_domains() {
+  // This is an array of ci-asce.org domain ids
+  $ci = array(102, 890, 275); // marvin, laura, erin
+
+  // load up every node and change the domains
+  $sql = "SELECT n.uid, n.nid FROM {node} n";
+  $results = db_query($sql);
+  $count = 0;
+  $grant['gid'] = 0;
+  $grant['realm'] = 'domain_id';
+  $grants[] = $grant;
+      
+  while ($row = db_fetch_object($results)) {
+    if (!in_array($row->uid, $ci)) {
+    	//$node = node_load($row->nid);
+    	//$copri .= '<a href="/node/' . $node->nid . '/edit">' . $node->title . ', ' . $node->nid . '</a><br/>';
+    	$grants = array();
+    	$count = $count +1;
+    	db_query("DELETE FROM {domain_access} WHERE nid = %d", $row->nid);
+    	db_query("INSERT INTO {domain_access} (nid, gid, realm) VALUES (%d, %d, '%s')", $row->nid, $grant['gid'], $grant['realm']);
+    }
+    else {
+    	//$ci_nodes .= '<a href="/node/' . $node->nid . '/edit">' . $node->title . ', ' . $node->nid . '</a><br/>';
+    	$count = $count +1;
+    }
+  }
+  $output = '<h1>COPRI Nodes</h1>';
+  $output .= $copri;
+  $output .= '<h1>CI Nodes</h1>';
+  $output .= $ci_nodes;
+  
+  return $count . ' nodes were updated!'; //$output;
+}
+
+function asce_demo_mail() {
+	$sql = "SELECT n.uid, u.name, u.mail FROM `notifications` n join users u on n.uid = u.uid group by n.uid, u.name";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$emails[$row->uid] = $row->mail;
+	}
+  $test[102] = 'moey@asce.org';
+  //$test[14] = 'tchase@asce.org';
+	//The $message array may have the following elements
+	//'subject' => Message subject, may be already rendered or not
+	//'body' => Message content, may be already rendered or not
+	//'params' => Optional message params, indexed by sending method group
+	//I.e. params for mail methods will be in $message['params']['mail']
+	//'render' => Optional flag to mark the message subject and body as rendered
+	//'sender' => Optional int to identify message sender, may be $user->uid
+	//'sender_account' => Optional user account to use as message sender
+  $output = kpr($test, TRUE);
+  foreach ($test as $uid => $email) {
+  	$user = user_load($uid);
+  	$message['subject'] = t('Our apologies.');
+  	if ($user->profile_nickname) {
+  	  $message['body'] = $user->profile_nickname . ",\n\n";
+  	}  
+  	elseif ($user->profile_first_name) {
+  		$message['body'] = $user->profile_first_name . ",\n\n";
+  	}
+  	$message['body'] .= "You may have recently received some emails from the site informing you of updates on some older content on the site. We ";
+  	$message['body'] .= "inadvertently sent this email while running some maintenance checks on the site. Please disregard them and we apologize for any inconvenience.\n\n";
+  	$message['body'] .= t("Sincerely,\n\nMarvin Oey");
+  	$message['sender'] = t('ci@ci-asce.org');
+  	$result = messaging_message_send($test, $message, 'phpmailer');
+  }
+	$output .= kpr($emails, TRUE);
+	$output .= kpr($message, TRUE);
+	$output .= $result;
+	return $output;
+}

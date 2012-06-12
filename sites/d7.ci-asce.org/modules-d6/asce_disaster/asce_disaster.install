@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function asce_disaster_schema() {
+  $schema = array();
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function asce_disaster_uninstall() {
+  // Remove all database tables.
+  drupal_uninstall_schema('asce_disaster');
+}
+
+function asce_disaster_install() {
+	db_query("UPDATE {system} SET weight = 10 WHERE name = 'asce_disaster'");
+}

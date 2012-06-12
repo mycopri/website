@@ -1,0 +1,6 @@
+; $Id$
+name = ASCE Mail Manager
+description = "Provides ASCE Staff with a simple mail manager."
+core = 6.x
+package = ASCE
+

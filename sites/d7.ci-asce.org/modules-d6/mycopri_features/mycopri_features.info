@@ -1,0 +1,9 @@
+; $Id$
+name = mycopri Features
+description = "Provide custom blocks for 
+adding content to groups and other things 
+that will be added and listed here...<br/>
+  -Provides a custom block fopr displaying activity lists."
+
+package = "ASCE - mycopri"
+core = 6.x

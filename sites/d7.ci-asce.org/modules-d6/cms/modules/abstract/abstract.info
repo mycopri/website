@@ -1,0 +1,6 @@
+; $Id$
+name = Abstract
+description = Allows uploading, resizing and viewing of abstracts.
+core = 6.x
+package = ASCE-CI
+

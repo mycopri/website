@@ -1,0 +1,6 @@
+; $Id$
+name = CI Zone News
+description = A news article specifically for the CI Zone. CI Zone News is automatically placed on the CI Zone pages.
+core = 6.x
+package = ASCE - ci
+

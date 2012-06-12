@@ -1,0 +1,8 @@
+; $Id 
+name = Messaging CMS
+description = Sending Method: Integrate Privatemsg into CMS
+package = "ASCE-CI"
+dependencies[] = messaging
+dependencies[] = privatemsg
+dependencies[] = cms
+core = 6.x

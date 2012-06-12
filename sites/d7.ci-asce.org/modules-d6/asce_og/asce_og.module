@@ -1,0 +1,86 @@
+<?php
+
+function asce_og_menu() {
+  $items['admin/build/domain/script/%'] = array(
+    'title' => 'Run domain access script',
+    'description' => t('Fix the group posts to have correct domain access options.'),
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'page callback' => 'asce_og_fix_domain_access_posts',
+    'page arguments' => array(4),
+  );	
+	return $items;
+}
+function asce_og_nodeapi (&$node, $op, $teaser = NULL, $page = NULL) {
+	switch ($op) {
+		case 'load':
+			// A group post is being loaded, make sure the user can access it
+			// via domains
+			$current_domain = domain_get_domain();
+			if(og_is_group_post_type($node->type)) {
+				// Create an array of domains that this node should have access to
+	    	// starting with the groups that this node belongs to
+	    	$groups = $node->og_groups;
+	    	$domains = array();
+	    	$domain = array();
+	    	foreach($groups as $group_nid) {
+	    		$group = node_load($group_nid);
+	    		$domains = $group->domains;
+	    		$domain = $domain + $domains;
+	    	}
+	      
+	      // Now add the user's domain to the node
+	      global $user;
+	      $domains = $user->domain_user;
+	      $domain = array_merge($domain, $domains);
+	      
+	      $node->domains = $domain;
+	    }
+	}
+}
+
+function asce_og_fix_domain_access_posts($nid = NULL) {
+	// Get a list of group nodes
+	if ($nid) {
+		$sql = "SELECT nid FROM og WHERE nid=" . $nid;
+	}
+	else {
+		$sql = "SELECT nid FROM og LIMIT 1, 10";
+	}
+	$results = db_query($sql);
+	$output = '';
+	while ($row = db_fetch_object($results)) {
+		$node = node_load($row->nid);
+		$group_nodes[$node->nid] = $node;
+		}
+	dsm($group_nodes);
+	
+	foreach($group_nodes as $group_node) {
+	  // Get a list of group posts
+	  $sql = "SELECT DISTINCT nid FROM og_ancestry WHERE group_nid=%d";
+    $results = db_query($sql, $group_node->nid);
+    while ($row = db_fetch_object($results)) {
+    	$node = node_load($row->nid);
+    	$groups = $node->og_groups;
+    	$domains = array();
+    	foreach($groups as $nid) {
+      $group_node = node_load($nid);
+      foreach($group_node->domains as $domain_id) {
+      	$domains[$domain_id] = $domain_id;
+      	if (!isset($out_groups[$group_node->nid])){
+      		$out_groups[$group_node->nid] = $group_node;
+      		$output .= '<a href="/node/' . $group_node->nid . '">' . $group_node->title . '</a><br/>';
+      	}
+      }
+    	}
+    }
+  
+  
+  	
+  	$node->domains = $domains;
+  	//node_save($node);
+  	$count = $count + 1;
+  	$nodes[$node->nid] = $node;
+  }  
+  //dsm($nodes);	
+	return $output;
+}

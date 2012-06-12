@@ -1,0 +1,23 @@
+<?php
+
+// $Id: domain_session_default.module.test,v 1.2.2.2 2008/07/03 20:17:36 jhedstrom Exp $
+
+/**
+ * @file
+ * Provides SimpleTests for the Domain Session Default module.
+ */
+
+/**
+ * Domain Session Default SimpleTest class.
+ */
+class DomainSessionDefaultTest extends DrupalTestCase {
+  function get_info() {
+    return array(
+      'name' => t('Domain Session Default tests'),
+      'desc' => t('Tests various Domain Session Default features'),
+      'group' => t('Domain Access'),
+    );
+  }
+
+  // @todo: Write some tests once the Domain Access module can create domains.
+}

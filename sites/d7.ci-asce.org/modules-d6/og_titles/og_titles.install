@@ -1,0 +1,126 @@
+<?php
+// $Id: og_titles.install,v 1.1.2.5 2009/05/28 16:54:58 mradcliffe Exp $
+
+ /**
+  * hook_install implementation
+  */
+ function og_titles_install()
+ {
+	 drupal_install_schema('og_titles');
+	 drupal_set_message('Installed og_titles and og_uid_tables into the database');
+ } // function og_titles_install
+
+
+ /**
+  * hook_uninstall implementation
+  */
+ function og_titles_uninstall()
+ {
+	 drupal_uninstall_schema('og_titles');
+ } // function og_titles_uninstall
+
+
+ /**
+  * hook_schema implementation -- we are just adding a simple table that adheres to the og_ table namespace
+  */
+ function og_titles_schema()
+ {
+	 $schema['og_uid_titles'] = array(
+	 	'description' => t('This is the og_uid_titles table for the og_titles module.'),
+	 	'fields' => array(
+			'nid' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => t('Node id reference') ),
+			'uid' => array( 'type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'description' => t('User id reference') ),
+			'title' => array( 'type' => 'varchar', 'length' => '255', 'not null' => FALSE, 'description' => t('Arbitrary custom title or rank.') ),
+			'weight' => array( 'type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'description' => t('the weight copied over from og_titles'), 'default' => '0'),
+		),
+		'primary key' => array('nid','uid')
+	 );
+
+	 $schema['og_titles'] = array(
+	 	'description' => t('This is the og_titles table, stores info. of each available title for each group'),
+		'fields' => array(
+			'nid' => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => t('Group node id reference') ),
+			'tlid' => array( 'type' => 'serial', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => t('The unique identifier for a particular title in a particular group.') ),
+			'title' => array( 'type' => 'varchar', 'length' => '255', 'not null' => FALSE, 'description' => t('Arbitrary custom title or rank.') ),
+			'weight' => array( 'type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'description' => t('Weight of the title'), 'default' => '0'),
+		),
+		'primary key' => array('nid','tlid'),
+	 );
+
+	 return $schema;
+ } // function og_titles_schema
+
+
+ /** 
+  * hook_update_N implementaiton
+  */
+ function og_titles_update_6001()
+ {
+	$ret = array();
+	$ogt = array(
+	 	'description' => t('This is the og_titles table, stores info. of each available title for each group'),
+		'fields' => array(
+			nid => array( 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => t('Group node id reference') ),
+			tlid => array( 'type' => 'serial', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => t('The unique identifier for a particular title in a particular group.') ),
+			title => array( 'type' => 'varchar', 'length' => '255', 'not null' => FALSE, 'description' => t('Arbitrary custom title or rank.') )
+		),
+		'primary key' => array('nid','tlid'),
+	 );
+
+	db_create_table($ret,'og_titles',$ogt);
+
+	return $ret;
+ } // function og_titles_update_6001
+
+ 
+ function og_titles_update_6002()
+ {
+	 $ret = array();
+
+	 db_add_field($ret,'og_titles','weight', array('type' => 'int', 'size' => 'normal', 'not null' => TRUE));
+
+	 return $ret;
+ } // function og_titles_update_6002
+ 
+ function og_titles_update_6003()
+ {
+	 $ret = array();
+
+	 db_add_field($ret,'og_uid_titles','weight', array('type' => 'int', 'size' => 'normal' , 'not null' => TRUE));
+
+	 return $ret;
+ } // function og_titles_update_6003
+
+ function og_titles_update_6004()
+ {
+ 	 $ret = array();
+
+	 db_change_field($ret, 'og_titles', 'weight', 'weight', array('type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'description' => t('Weight of the title'), 'default' => '0'));
+	 db_change_field($ret, 'og_uid_titles', 'weight', 'weight', array('type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'description' => t('the weight copied over from og_titles'), 'default' => '0'));
+
+	 return $ret;
+ }
+
+ function og_titles_update_6005()
+ {
+     $ret = array();
+
+     menu_rebuild();
+     drupal_set_message("Menu system rebuilt.");
+
+     return $ret;
+ }
+
+ function og_titles_update_6006()
+ {
+     $ret = array();
+
+     $option = variable_get('og_titles_selection', 0);
+
+     if ($option == 0)
+       variable_set('og_titles_selection', 'og_titles_text_input');
+     else
+       variable_set('og_titles_selection', 'og_titles_select_input');
+
+     return $ret;
+ }

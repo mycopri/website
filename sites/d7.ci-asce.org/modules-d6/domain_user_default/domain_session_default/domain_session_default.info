@@ -1,0 +1,15 @@
+; $Id: domain_session_default.info,v 1.2.2.2 2008/07/03 20:17:35 jhedstrom Exp $
+name = Domain Session Default
+description = Provide default domain for unauthenticated visitors via browser cookies
+package = Domain Access
+dependencies[] = domain_user_default
+dependencies[] = domain
+dependencies[] = session_api
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-12-09
+version = "6.x-1.2"
+core = "6.x"
+project = "domain_user_default"
+datestamp = "1291927842"
+

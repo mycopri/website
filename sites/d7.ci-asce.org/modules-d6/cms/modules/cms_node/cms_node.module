@@ -1,0 +1,144 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_node_info
+ */
+function cms_node_node_info() {
+	return array(
+    'cms_node' => array(
+      'name' => t('CMS Node'),
+      'module' => 'cms_node',
+      'description' => t('A content type reserved for CMS module. Has custom templates for node views.'),
+      'title_label' => t('Title'),
+      'body_label' => t('Description'),
+      'has_body' => TRUE,
+		),
+	);
+}
+
+/*
+ * Implementation of hook_prepare()
+ */
+function cms_node_prepare(&$node) {
+	// Only do this if the cms module is enabled
+	// may not be necessary since a dependency of this module
+	// is cms
+	if(module_exists('cms')) {
+		// if ($_GET['eid']) {
+			// $node->eid = $_GET['eid'];
+		// }
+		// else {
+			// drupal_set_message('You tried to go to a page in an unexpected manner. You have been redirected to the home page.');
+			// $dest = $_GET['destination'] ? $_GET['destination'] : '';
+			// drupal_goto($dest);
+		// }
+	}
+}
+
+/*
+ * Implementation of hook_insert()
+ */
+function cms_node_insert($node) {
+	if(module_exists('cms')) {
+		$type = 'not specified';
+		if (isset($_GET['type'])) {
+			$type = $_GET['type'];
+		}
+		if (isset($node->cms_node_type)) {
+			$type = $node->cms_node_type;
+		}
+		$record->eid = $node->event;
+		$record->nid = $node->nid;
+		$record->type = $type;
+		drupal_write_record('cms_nodes', $record);
+	}
+}
+
+/*
+ * Implementation of hook_update
+ */
+function cms_node_update($node) {
+	if (module_exists('cms')) {
+		$record->eid = $node->event;
+		$record->nid = $node->nid;
+		if(drupal_write_record('cms_nodes', $record, array('nid', 'eid'))) {
+			drupal_set_message(' conference updated');
+		}
+		else {
+			drupal_set_message('error in cms node update', 'error');
+		}
+	}
+}
+
+/**
+ * Implementation of hook_perm
+ */
+function cms_node_perm() {
+	return array('view conference home page', 'create conference home page', 'edit own conference home page', 
+							'edit any conference home page', 'delete own conference home page', 'delete any conference home page');
+}
+
+/**
+ * Implementation of hook_access().
+ */
+function cms_node_access($op, $node, $account) {
+	switch ($op) {
+		case 'create':
+			if (user_access('create conference home page', $account)) {
+				return TRUE;
+			}
+			break;
+
+		case 'update':
+			if (user_access('edit any conference home page', $account) || ($account->uid == $node->uid && user_access('edit own conference home page', $account))) {
+				return TRUE;
+			}
+			break;
+
+		case 'delete':
+			if (user_access('delete any conference home page', $account) || ($account->uid == $node->uid && user_access('delete own conference home page', $account))) {
+				return TRUE;
+			}
+			break;
+
+		case 'view':
+			if (($account->uid == $node->uid || user_access('access content', $account))) {
+				return TRUE;
+			}
+			else {
+				return FALSE;
+			}
+			break;
+	}
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function cms_node_form(&$node, $form_state) {
+	global $user;
+
+	$admin = user_access('administer nodes') || user_access('edit any conference home page') || (user_access('edit own conference home page') && $user->uid == $node->uid);
+
+	$type = node_get_types('type', $node);
+
+	$form = array(
+    '#cache' => TRUE,
+	);
+
+	$form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+	);
+
+	if ($type->has_body) {
+		$form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+	}
+
+	return $form;
+}

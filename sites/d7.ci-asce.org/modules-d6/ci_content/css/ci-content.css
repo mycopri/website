@@ -1,0 +1,16 @@
+.ci-content img.teaser {
+	width: 80px;
+	height: 80px;
+	border: solid;
+	float: left;
+	margin-right: 1em;
+	margin-bottom: .7em;
+}
+
+.ci-content h2 {
+	border: none;
+}
+
+.ci-front-block-left-more {
+	text-align: right; 
+}

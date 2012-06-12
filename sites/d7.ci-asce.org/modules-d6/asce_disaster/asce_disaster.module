@@ -1,0 +1,438 @@
+<?php
+// $Id$
+
+/*
+ * Implementation of hook_menu().
+ * 
+ * The array of items are as follows:
+ * 
+ * "title": Required. The untranslated title of the menu item.
+ * "title callback": Function to generate the title, defaults to t(). If you require only the raw string to be output, set this to FALSE.
+ * "title arguments": Arguments to send to t() or your custom callback.
+ * "description": The untranslated description of the menu item.
+ * "page callback": The function to call to display a web page when the user visits the path. If omitted, the parent menu item's callback will be used instead.
+ * "page arguments": An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component (see arg()).
+ * "access callback": A function returning a boolean value that determines whether the user has access rights to this menu item. Defaults to user_access() unless a value is inherited from a parent menu item..
+ * "access arguments": An array of arguments to pass to the access callback function. Integer values pass the corresponding URL component.
+ * "file": A file that will be included before the callbacks are accessed; this allows callback functions to be in separate files. The file should be relative to the implementing module's directory unless otherwise specified by the "file path" option.
+ * "file path": The path to the folder containing the file specified in "file". This defaults to the path to the module implementing the hook.
+ * "weight": An integer that determines relative position of items in the menu; higher-weighted items sink. Defaults to 0. When in doubt, leave this alone; the default alphabetical order is usually best.
+ * "menu_name": Optional. Set this to a custom menu if you don't want your item to be placed in Navigation.
+ * "type": A bitmask of flags describing properties of the menu item. Many shortcut bitmasks are provided as constants in menu.inc:
+ *          MENU_NORMAL_ITEM: Normal menu items show up in the menu tree and can be moved/hidden by the administrator.
+ *          MENU_CALLBACK: Callbacks simply register a path so that the correct function is fired when the URL is accessed.
+ *          MENU_SUGGESTED_ITEM: Modules may "suggest" menu items that the administrator may enable.
+ *          MENU_LOCAL_TASK: Local tasks are rendered as tabs by default.
+ *          MENU_DEFAULT_LOCAL_TASK: Every set of local tasks should provide one "default" task, that links to the same path as its parent when clicked.
+ * If the "type" key is omitted, MENU_NORMAL_ITEM is assumed.
+ */
+       
+function asce_disaster_menu() {
+	$items['investigation/register/test'] = array(
+    'title' => t('Coastal Disasters Investigations'),
+    'description' => t('Main page for the coastal disasters investiagtions team application process.'),
+    'page callback' => 'drupal_get_form',
+	  'page arguments' => array('user_register'),
+    'access callback' => TRUE,
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+  );
+	$items['investigation'] = array(
+	  'title' => t('Coastal Disasters Investigations'),
+	  'description' => t('Main page for the coastal disasters investiagtions team application process.'),
+	  'page callback' => 'asce_disaster_main',
+    'access callback' => TRUE,
+	  'menu_name' => 'Student Days',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'asce_disaster.pages.inc',
+	);
+	$items['investigation/main'] = array(
+    'title' => 'Main',
+	  'access callback' => 'asce_disaster_not_anonymous',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -5,
+  );
+  $items['investigation/apply'] = array(
+    'title' => t('Application'),
+    'description' => t('Application'),
+    'access callback' => 'asce_disaster_access_apply',
+	  'access arguments' => array('create', 'field_investigation_application'),
+	  'page callback' => 'asce_disaster_application',
+    'menu_name' => 'Student Days',
+	  'type' => MENU_LOCAL_TASK,
+	  'file' => 'asce_disaster.pages.inc',
+	  'weight' => 1,
+  );
+  $items['investigation/register'] = array(
+    'title' => t('Create new account'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_register'),
+    'access callback' => 'user_register_access',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'user.pages.inc',
+    'file path' => drupal_get_path('module', 'user'),
+    'weight' => 0,
+  );
+  $items['investigation/login'] = array(
+    'title' => t('Login'),
+    'description' => t('Login'),
+    'page callback' => 'asce_disaster_main',
+    'access callback' => 'user_is_anonymous',
+    'menu_name' => 'Student Days',
+    'file' => 'asce_disaster.pages.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['investigation/password'] = array(
+    'title' => 'Request new password',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_pass'),
+    'access callback' => 'user_is_anonymous',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'user.pages.inc',
+    'file path' => drupal_get_path('module', 'user'),
+    'weight' => 2,
+  );
+  $items['investigation/staff'] = array(
+    'title' => t('Staff'),
+    'description' => t('Staff Page'),
+    'page callback' => 'asce_disaster_staff',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'asce_disaster.pages.inc',
+    'weight' => 10,
+  );
+  $items['investigation/add-content'] = array(
+    'title' => t('Add Content to this Page'),
+    'description' => t('Staff Page:  Add content to this page'),
+    'page callback' => 'asce_disaster_add_content',
+    'access callback' => 'asce_disaster_tab_access',
+    'access arguments' => array('create', 'ci_content'),
+    //'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'asce_disaster.pages.inc',
+    'weight' => 11,
+  );
+  
+  return $items;
+}
+
+function asce_disaster_block($op = 'list', $delta = 0, $edit = array()) {
+  // We only want to show this block for book pages
+  
+  if ($op == 'list') {
+    // returns array, with the following key-value pairs:
+    //
+    // 'info': (required) The human-readable name of the block. This is used to identify the block on administration screens, and is not displayed to non-administrative users.
+    // 'cache': A bitmask of flags describing how the block should behave with respect to block caching. The following shortcut bitmasks are provided as constants in block.module:
+    //    BLOCK_CACHE_PER_ROLE (default): The block can change depending on the roles the user viewing the page belongs to.
+    //    BLOCK_CACHE_PER_USER: The block can change depending on the user viewing the page. This setting can be resource-consuming for sites with large number of users, and should only be used when BLOCK_CACHE_PER_ROLE is not sufficient.
+    //    BLOCK_CACHE_PER_PAGE: The block can change depending on the page being viewed.
+    //    BLOCK_CACHE_GLOBAL: The block is the same for every user on every page where it is visible.
+    //    BLOCK_NO_CACHE: The block should not get cached.
+    // 'weight': (optional) Initial value for the ordering weight of this block. Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen.
+    // 'status': (optional) Initial value for block enabled status. (1 = enabled, 0 = disabled). Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen.
+    // 'region': (optional) Initial value for theme region within which this block is set. Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen. Note: If you set a region that isn't available in the currently enabled theme, the block will be disabled.
+    // 'visibility': (optional) Initial value for the visibility flag, which tells how to interpret the 'pages' value. Possible values are:
+    //    0: Show on all pages except listed pages. 'pages' lists the paths where the block should not be shown.
+    //    1: Show only on listed pages. 'pages' lists the paths where the block should be shown.
+    //    2: Use custom PHP code to determine visibility. 'pages' gives the PHP code to use.
+    //  Most modules do not provide an initial value for 'visibility' or 'pages', and any value provided can be modified by a user on the block configuration screen.
+    // 'pages': (optional) See 'visibility' above.
+
+    $blocks[0]['info'] = t('Volunteer Now');
+    $blocks[0]['cache'] = BLOCK_CACHE_PER_PAGE;
+    return $blocks;
+  }
+
+  if ($op == 'view') {
+  	global $user;
+  	$block['content'] = '<p>';
+  	$block['content'] .= 'Through its Institutes, ASCE undertakes various activities ';
+  	$block['content'] .= 'ranging from community outreach and professional training to  ';
+  	$block['content'] .= 'post-disaster investigations to assess the effects of ';
+  	$block['content'] .= 'hurricanes, earthquakes, tsunamis and other  ';
+  	$block['content'] .= 'catastrophic events to civil engineering infrastructure. ';
+  	$block['content'] .= 'ASCE and Institute members can volunteer to participate ';
+  	$block['content'] .= 'in all these activities by creating a Volunteer Profile below. ';
+  	$block['content'] .= 'The ' . l('ASCE Post-Disaster Assessment Manual', 'node/6344'). ' ';
+  	$block['content'] .= 'provides information about the formation and operation of ';
+  	$block['content'] .= 'ASCE post-disaster assessment teams.';
+  	$block['content'] .= '</p>';
+  	
+  	// if user is anonymous then take them to the create a profile
+  	if (user_is_anonymous()) {
+      $output = '<p style="text-align: center;">';
+      $output .= '<a href="investigation/register"><strong><span style="font-size: medium;">';
+      $output .= 'Create An Account</span></strong></a><br><em>Already have an account?';
+      $output .= '</em> <a href="investigation/login">Login</a></p>';
+  	}
+  	else{
+      // Check to see if the user already has a profile created.
+      $sql = "SELECT * FROM {node} WHERE type = 'field_investigation_application' AND uid = %d";
+      $results = db_query($sql, $user->uid); 
+      $application = db_fetch_object($results);
+      if ($application) {
+      	// User already has an application
+        $output = '<p style="text-align: center;">';
+        if (!drupal_is_front_page()) {
+        	$output .= '<a href="' . $application->nid . '"><strong><span style="font-size: medium;">';
+        }
+        elseif (drupal_is_front_page()) {
+        	$output .= '<a href="node/' . $application->nid . '"><strong><span style="font-size: medium;">';
+        }
+        $output .= 'View/Edit your Volunteer Profile</span></strong></a><br>';
+      }
+      else {
+      	// User does not have an application provide link to application
+        $output = '<p style="text-align: center;">';
+        if (!drupal_is_front_page()) {
+        	$output .= '<a href="add/field-investigation-application"><strong><span style="font-size: medium;">';
+        }
+        elseif (drupal_is_front_page()) {
+        	$output .= '<a href="node/add/field-investigation-application"><strong><span style="font-size: medium;">';
+        }
+        $output .= 'Create a Volunteer Profile</span></strong></a><br>';
+      }
+  	}
+  	$block['subject'] = 'Volunteer Now!';
+  	$block['content'] .= $output;
+  	return $block;
+  }
+  
+  if ($op == 'configure') {
+    
+  }
+  
+  if ($op == 'save') {
+    
+  }
+}
+
+function asce_disaster_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($node->type == 'field_investigation_application') {
+    drupal_set_title(t('Your Volunteer Profile'));
+    $bc[] = l(t('Home'), "");
+    $bc[] = l(t('ASCE Post-Disaster Investigations'), "node/6336");
+    drupal_set_breadcrumb($bc);
+  }
+}
+
+function asce_disaster_tab_access($op, $type) {
+  if (user_access('administer student days')) {
+    if (node_access($op, $type)) {
+      if (!arg(1)) {
+        return TRUE;
+      }
+    }
+  }
+}
+
+function asce_disaster_not_anonymous() {
+	return !user_is_anonymous() ? TRUE : FALSE;
+}
+
+function asce_disaster_access_apply($op, $node, $account = NULL) {
+	$return = node_access($op, $node, $account);
+	if ($return) {
+		$return = user_is_anonymous() ? FALSE : TRUE;
+	}
+	return $return;
+}
+
+function asce_disaster_form_alter(&$form, &$form_state, $form_id) {
+	if ($form_id == 'field_investigation_application_node_form') {
+		drupal_set_title(t('Volunteer Profile'));
+	}	
+	if ($form_id == 'user_login' && arg(0) == 'investigation') {
+		//$form['#submit'] = array();
+		$form['#submit'][] = 'asce_disaster_login_submit';
+	}
+	if ($form_id == 'user_register' && arg(0) == 'investigation') {
+		dsm($form);
+		$form['account']['name']['#access'] = FALSE;
+		$mess = '<em><b>The email you provide will also be your login. </b></em>';
+		$form['account']['mail']['#description'] = $mess . $form['account']['mail']['#description']; 
+		// Override the user settings for account creation
+		if ($form['account']['pass']['#description'] == t('To change the current user password, enter the new password in both fields.')) {
+			// Do nothing
+		}
+		else {
+			$form['account']['pass'] = array(
+      '#type' => 'password_confirm',
+      '#description' => t('Provide a password for the new account in both fields.'),
+      '#required' => TRUE,
+      '#size' => 25,
+			);
+		}
+		$form['#submit'] = array();
+		$form['#submit'][] = 'asce_disaster_register_submit';
+		array_unshift($form['#validate'], 'asce_disaster_register_validate');
+	}
+	//drupal_set_message($form_id);
+	if ($form_id == 'field_investigation_application_node_form') {
+		  $form['notifications']['#access'] = FALSE;
+		  $form['title']['#access'] = FALSE;
+		  array_unshift($form['buttons']['submit']['#submit'], 'asce_disaster_node_form_submit');
+		  $form['buttons']['submit']['#submit'][] = 'asce_disaster_node_form_submit';
+		  //dsm($form);
+		if (arg(2) == 'edit' && $form['field_student_days_content']['#default_value'][0]['value'] == 1) {
+			drupal_set_message('We are editing ci_content and it is student days content!');
+			$form['buttons']['submit']['#submit'][] = 'asce_disaster_node_form_submit';
+		}
+	}
+}
+
+function asce_disaster_theme() {
+  $return = array(
+    'asce_disaster_staff_menu' => array(
+      'arguments' => array('content' => NULL),
+      'file' => 'asce_disaster.pages.inc',
+    ),
+  );
+  return $return;
+}
+
+function asce_disaster_login_submit($form, &$form_state) {
+  global $user;
+  if ($user->uid) {
+    $form_state['redirect'] = 'node/6336';
+    return;
+  }
+}
+
+function asce_disaster_register_validate($form, &$form_state) {
+  dsm($form_state);
+  $form_state['values']['name'] = $form_state['values']['mail'];  
+  //$nickname = $form_state['values']['profile_nickname'] ? $form_state['values']['profile_nickname'] : NULL; 
+  //if (empty($nickname)) {
+  //	$form_state['values']['name'] = $form_state['values']['profile_first_name'] . ' ' . $form_state['values']['profile_last_name'];
+  //}
+  //else {
+  //	$form_state['values']['name'] = $form_state['values']['profile_nickname'] . ' ' . $form_state['values']['profile_last_name'];
+  //}
+}
+
+function asce_disaster_register_submit($form, &$form_state) {
+	asce_disaster_logintoboggan_user_register_submit($form, &$form_state);
+	$form_state['redirect'] = 'node/add/field-investigation-application';
+}
+
+/**
+ * Custom submit function for student registration from student days page
+ *
+ * @ingroup logintoboggan_form
+ */
+function asce_disaster_logintoboggan_user_register_submit($form, &$form_state) {
+
+  $reg_pass_set = TRUE;
+
+  // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+  // handle things a bit differently.
+  $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
+
+  // If we are allowing user selected passwords then skip the auto-generate function
+  // The new user's status should default to the site settings, unless reg_passwd_set == 1
+  // (immediate login, we are going to assign a pre-auth role), and we want to allow
+  // admin approval accounts access to the site.
+  if ($reg_pass_set) {
+    $pass = $form_state['values']['pass'];
+    $status = 1;
+  }
+  else {
+    $pass = user_password();
+    $status = variable_get('user_register', 1) == 1;
+  }
+
+  // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
+  if (isset($form_state['values']['conf_mail'])) { unset($form_state['values']['conf_mail']); }
+
+  if (array_intersect(array_keys($form_state['values']), array('uid', 'roles', 'init', 'session', 'status'))) {
+    watchdog('security', 'Detected malicious attempt to alter protected user fields.', array(), WATCHDOG_WARNING);
+    $form_state['redirect'] = 'investigation/register';
+    return;
+  }
+
+  // The unset below is needed to prevent these form values from being saved as user data.
+  unset($form_state['values']['form_token'], $form_state['values']['submit'], $form_state['values']['op'], $form_state['values']['notify'], $form_state['values']['form_id'], $form_state['values']['form_build_id'], $form_state['values']['affiliates'], $form_state['values']['destination']);
+
+  // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
+  // and the pre-auth role isn't anon or auth user.
+  $validating_id = logintoboggan_validating_id();
+  $form_state['values']['roles'] = array(2 => 'authenticated user');
+  $roles = isset($form_state['values']['roles']) ? array_filter($form_state['values']['roles']) : array();
+  if ($reg_pass_set && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
+    $roles[$validating_id] = 1;
+  }
+
+  $edit = array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status));
+  $account = user_save('', $edit);
+  // Add plain text password into user account to generate mail tokens.
+  $account->password = $pass;
+  $form_state['user'] = $account;
+
+  watchdog('user', 'New user: %name (%email).', array('%name' => $account->name, '%email' => $account->mail), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
+
+  $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : NULL;
+
+  // Compose the appropriate user message--admin approvals don't require a validation email.
+  if($reg_pass_set) {
+    if ($pre_auth) {
+      $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+    }
+    else {
+      $message = '';
+    }
+  } else {
+    $message = t('Your password and further instructions have been sent to your e-mail address.');
+  }
+
+  // Create new user account, no administrator approval required.
+  $mailkey = 'register_no_approval_required';
+
+  // Mail the user.
+  _logintoboggan_mail_notify($mailkey, $account, $login_url);
+
+  drupal_set_message($message);
+
+  // where do we need to redirect after registration?
+  $redirect = 'investigation';
+  $form_state['redirect'] = asce_disaster_logintoboggan_process_login($account, $edit, $redirect);
+}
+
+/**
+ * Actually log the user on
+ *
+ * @param object $account
+ *   The user object.
+ * @param array $edit
+ *   An array of form values if a form has been submitted.
+ * @param array $redirect
+ *   An array of key/value pairs describing a redirect location, in the form
+ *   that drupal_goto() will understand. Defaults to:
+ *     'path' => 'user/'. $user->uid
+ *     'query' => NULL
+ *     'fragment' => NULL
+ */
+
+function asce_disaster_logintoboggan_process_login($account, $edit, $redirect = array()){
+  global $user;
+
+  $user = user_load($account->uid);
+
+  // Call core's function to finalize the login.
+  user_authenticate_finalize($edit);
+
+  if (isset($redirect['path']) && $redirect['path'] != '') {
+    return $redirect;
+  }
+}
+
+function asce_disaster_node_form_submit($form, &$form_state) {
+	//dsm($form_state);
+	$user = user_load($form_state['values']['uid']);
+	$form_state['values']['title'] = 'Volunteer profile for ' . $user->profile_first_name . ' ' . $user->profile_last_name;
+	$form_state['redirect'] = 'node/6336';
+}

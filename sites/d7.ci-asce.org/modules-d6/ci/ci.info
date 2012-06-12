@@ -1,0 +1,6 @@
+; $Id$
+name = CI
+description = "CI Features"
+core = 6.x
+package = ASCE - ci
+

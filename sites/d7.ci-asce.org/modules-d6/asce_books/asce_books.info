@@ -1,0 +1,7 @@
+; $Id$
+name = ASCE Books Enhancements
+description = "Provides added functionality to books."
+core = 6.x
+package = ASCE
+dependencies[] = advancedbookblocks
+

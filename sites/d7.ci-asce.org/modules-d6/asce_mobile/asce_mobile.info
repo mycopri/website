@@ -1,0 +1,6 @@
+; $Id$
+name = ASCE Mobile Tools
+description = "This module provides the ability to designate mobile pages on the site"
+core = 6.x
+package = ASCE
+

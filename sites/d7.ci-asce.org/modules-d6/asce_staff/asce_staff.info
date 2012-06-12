@@ -1,0 +1,6 @@
+; $Id$
+name = ASCE Staff Only Functionality
+description = "This module primarily adds staff only links i.e. links to create content."
+core = 6.x
+package = ASCE
+

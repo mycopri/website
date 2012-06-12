@@ -1,0 +1,732 @@
+<?php
+// $Id: og_titles.module,v 1.1.2.14 2009/12/03 20:22:21 mradcliffe Exp $
+
+ /**
+  * @File
+  * 	Organic Groups Titles
+  * add arbitrary custom titles to organic group members
+  *
+  * Matthew Radcliffe <mradcliffe@kosada.com>
+  */
+
+ /**
+  * hook_help implementation
+  * @param $path
+  * @param $arg
+  */
+ function og_titles_help($path,$arg)
+ {
+	 switch($path)
+	 {
+		 case 'admin/help#og_titles':
+		 	return '<p>'.t('Extends Organic Groups allowing you to add arbitrary tiles or ranks per user in a group.');
+	 }
+ } // function og_titles_help
+
+ 
+ /**
+  * hook_views_api implementation
+  */
+ function og_titles_views_api()
+ {
+	 return array('api' => 2, 'path' => drupal_get_path('module','og_titles'));
+ } // function og_titles_views_api
+
+
+ /** 
+  * hook_perm implementation
+  * @return array of permissions
+  */
+ function og_titles_perm()
+ {
+	 return array('manage own og title');
+ } // function og_titles_perm
+
+
+ /**
+  * hook_theme implementation
+  * @eturn array of theme hooks
+  */
+ function og_titles_theme()
+ {
+	 return array(
+	 	'og_titles_group_settings' => array(
+			'arguments' => array( 'form' => NULL )
+		)
+	 );
+ } // function og_titles_theme
+
+
+ /**
+  * hook_menu implementation
+  */
+ function og_titles_menu()
+ {
+	$items['og/users/%node/titles'] = array(
+		'title' => 'Member Titles',
+		'description' => 'Manage custom member titles',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('og_titles_view_titles',2),
+		'access callback' => 'og_is_group_admin',
+		'access arguments' => array(2),
+		'type' => MENU_LOCAL_TASK,
+		'weight' => 5,
+	);
+	$items['admin/og/og_titles'] = array(
+		'title' => 'Organic groups titles configuration',
+		'description' => 'Select options for OG Titles',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('og_titles_admin_settings'),
+		'access callback' => 'user_access',
+		'access arguments' => array('administer site configuration'),
+		'type' => MENU_NORMAL_ITEM,
+	);
+
+	// should i local task it to the group or the og/users/% path?
+	if (variable_get('og_titles_selection','og_titles_text_input') == 1)
+	{
+		$items['node/%node/titles'] = array(
+			'title' => 'Manage titles',
+			'description' => 'Administer titles for this group',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('og_titles_group_settings',1),
+			'access callback' => 'og_is_group_admin',
+			'access arguments' => array(1),
+			'type' => MENU_LOCAL_TASK,
+			'weight' => 5,
+		);
+
+		$items['node/%node/titles/edit'] = array(
+			'title' => 'Add title',
+			'description' => 'Add additional title to this group',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('og_titles_add_title',1),
+			'access callback' => 'og_is_group_admin',
+			'access arguments' => array(1),
+			'type' => MENU_LOCAL_TASK,
+			'weight' => 0,
+		);
+
+        $items['node/%node/titles/delete/%'] = array(
+            'title' => 'Delete',
+            'desciption' => 'Delete a title by tlid',
+            'page callback' => 'og_titles_delete_title',
+            'page arguments' => array(1,4),
+            'access callback' => 'og_is_group_admin',
+            'access arguments' => array(1),
+            'type' => MENU_CALLBACK,
+            'weight' => 0,
+        );
+	}
+
+	$items['og/manage/%node/title'] = array(
+		'title' => 'My title',
+		'description' => 'Change your title for this group',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('og_titles_change_title',2),
+		'access callback' => 'og_titles_manage_own_title',
+		'access arguments' => array(2),
+		'type' => MENU_CALLBACK,
+	);
+
+	return $items;
+ } // funtion og_titles_menu
+
+
+ /**
+  * administration settings form page
+  * @return system_settings_form($form)
+  */
+ function og_titles_admin_settings()
+ {
+	 menu_rebuild(); // need to do this so that the menu disappears, sucks, but so does drupal
+
+     $options = module_invoke_all('ogt_type');
+
+	 $form['og_titles_selection'] = array(
+	 	'#type' => 'radios',
+	 	'#title' => t('Titles Selection Type'),
+		'#description' => t('Select whether titles are text input or selection-based'),
+		'#options' => $options,
+		'#default_value' => variable_get('og_titles_selection','og_titles_text_input'),
+	 );
+
+	 return system_settings_form($form);
+ } // function og_Titles_admin_settings
+
+
+ /**
+  * Implementation of hook_ogt_type
+  * 
+  * @return $array
+  */
+ function og_titles_ogt_type()
+ {
+    $options = array(
+        'og_titles_text_input' => t('Text Input'),
+        'og_titles_select_input' => t('Select Input'),
+    );
+    return $options;
+ } // function og_titles_ogt_type
+
+
+ /**
+  * og_titles_text_input form
+  * @param &$form
+  * @param &$form_state
+  * @param $gid
+  * @param $uid
+  */
+ function og_titles_text_input(&$form, &$form_state, $gid, $uid = NULL)
+ {
+    $form['#type'] = 'textfield';
+	$form['#size'] = 60;
+	$form['#maxlength'] = 64;
+
+    if (isset($uid))
+    {
+	    $res = db_query("SELECT title FROM {og_uid_titles} WHERE nid = %d AND uid = %d", $gid, $uid);
+        $to = db_fetch_object($res);
+    }
+
+    if (isset($form_state['values']['og_title']))
+        $form['#default_value'] = $form_state['values']['og_title'];
+    else
+        $form['#default_value'] = isset($to->title) ? $to->title : '';
+ } // function og_titles_text_input
+
+
+ /**
+  * og_titles_select_input_save callback
+  * @param $gid
+  * @param $uid
+  * @param $title
+  * @param &$form
+  * @param &$form_state
+  * @return $success
+  */
+ function og_titles_text_input_save($gid, $uid, $title, &$form, &$form_state)
+ {
+     $to = db_fetch_object(db_query("SELECT * FROM {og_uid_titles} WHERE nid = %d AND uid = %d", $gid, $uid));
+
+     if (isset($to->title))
+         return db_query("UPDATE {og_uid_titles} SET title = '%s', weight = 0 WHERE nid = %d AND uid = %d", $title, $gid, $uid);
+     else
+         return db_query("INSERT INTO {og_uid_titles} (nid, uid, title, weight) VALUES (%d, %d, '%s', 0)", $gid, $uid, $title);
+
+ } // function og_titles_text_input_save
+ 
+
+ /** 
+  * og_titles_select_input form
+  *
+  * @param &$form
+  * @param &$form_state
+  * @param $gid
+  * @param $uid
+  */
+ function og_titles_select_input(&$form, &$form_state, $gid, $uid = NULL)
+ {
+     $form['#type'] = 'select';
+     $titles = _og_titles_get_available_titles($gid);
+     $options['none'] = '<'.t('None').'>';
+     foreach($titles as $title)
+        $options[$title->title] = $title->title;
+     $form['#options'] = $options;
+
+     if (isset($uid))
+     {
+	    $res = db_query("SELECT title FROM {og_uid_titles} WHERE nid = %d AND uid = %d", $gid, $uid);
+        $to = db_fetch_object($res);
+     }
+
+     if (isset($form_state['values']['og_title']))
+        $form['#default_value'] = $form_state['values']['og_title'];
+     else
+        $form['#default_value'] = isset($to->title) ? $to->title : '';
+
+ } // function og_titles_select_input
+
+
+ /**
+  * og_titles_select_input_save callback
+  *
+  * @param $gid
+  * @param $uid
+  * @param $title
+  * @param &$form
+  * @param &$form_state
+  * @return $success
+  */
+ function og_titles_select_input_save($gid, $uid, $title, &$form, &$form_state)
+ {
+     $tl = _og_titles_get_title(NULL, $gid, $uid);
+     $to = db_fetch_object(db_query("SELECT * FROM {og_uid_titles} WHERE nid = %d AND uid = %d", $gid, $uid));
+
+     if ($title == 'none')
+         $title = '';
+     if (isset($to->title))
+         return db_query("UPDATE {og_uid_titles} SET title = '%s', weight = %d WHERE nid = %d AND uid = %d", $title, $tl->weight, $gid, $uid);
+     else
+         return db_query("INSERT INTO {og_uid_titles} (nid, uid, title, weight) VALUES (%d, %d, '%s', %d)", $gid, $uid, $title, $tl->weight);
+ } // function og_titles_select_input_save
+
+
+ /**
+  * manage a group's titles, draggable table form
+  * @param $form_state
+  * @param $node
+  * @return $form
+  */
+ function og_titles_group_settings(&$form_state,$node)
+ {
+	 if (!is_numeric($node->nid))
+	 {
+		 if (!is_numeric(arg(2)))
+		 {
+			 drupal_set_message(t('error: gid is not numeric: !node or !arg', array('!node' => $node->nid, '!arg' => arg(2))), 'error');
+			 return;
+		 }
+		 else
+		 	$gid = arg(2);
+	 }
+	 else
+		 $gid = $node->nid;
+
+	 $titles = _og_titles_get_available_titles($gid);
+
+	 foreach ($titles as $title)
+	 {
+		$form[$title->tlid] = array(
+			'#tree' => TRUE,
+		);
+	 	$form[$title->tlid]['weight'] = array(
+			'#type' => 'weight',
+			'#title' => t('Weight'),
+			'#delta' => 10,
+			'#default_value' => $title->weight
+		);
+		$form[$title->tlid]['title'] = array(
+			'#type' => 'value',
+			'#value' => $title->title,
+		);
+
+		$form[$title->tlid]['tlid'] = array(
+			'#type' => 'value',
+			'#value' => $title->tlid,
+		);
+	 }
+
+	 $form['nid'] = array(
+	 	'#type' => 'value',
+		'#value' => $gid,
+	 );
+
+	 $form['submit'] = array(
+	 	'#type' => 'submit',
+		'#value' => t('Save'),
+	 );
+
+	 return $form;
+
+ } // og_titles_group_settings
+
+
+ /**
+  * theme function for og_titles_group_settings
+  * @param $form
+  * @return what
+  */
+ function theme_og_titles_group_settings($form)
+ {
+	 drupal_add_tabledrag('title-overview', 'order', 'sibling', 'weight');
+
+	 $output = '';
+     $header = array('Title','Weight','Operation');
+	 $rows = array();
+	 $nid = $form['nid']['#value'];
+
+	 $i = 1;
+
+     foreach( element_children($form) as $key)
+	 {
+		 if (is_numeric($key))
+		 {
+			 $form[$key]['weight']['#attributes']['class'] = 'weight';
+
+			 $row = array();
+			 $row[] = $form[$key]['title']['#value'];
+			 $row[] = drupal_render($form[$key]['weight']);
+			 $row[] = l(t('Modify'),'node/'.$nid.'/titles/edit/'.$form[$key]['tlid']['#value']) . ', ' . l(t('Delete'),'node/'.$nid.'/titles/delete/'.$form[$key]['tlid']['#value']);
+			 $rows[] = array( 'data' => $row, 'class' => 'draggable');
+		 }
+	 }
+
+	 $tabs = array(
+	 	'add' => array(
+			'href' => 'node/'.$nid.'/titles/edit',
+			'title' => t('Add title')
+		)
+	 );
+
+	 $output .= theme('links', $tabs, array('class' => 'tabs secondary'));
+     $output .= theme('table', $header, $rows, array ('id' => 'title-overview'));
+	 $output .= drupal_render($form);
+
+	 return $output;
+
+ } // function theme_og_titles_group_settings
+
+ 
+ /**
+  * og_titles_group_settings submit callback
+  * @param $form
+  * @param $form_state
+  */
+ function og_titles_group_settings_submit($form, &$form_state)
+ {
+	 $nid = $form_state['values']['nid'];
+	 foreach(element_children($form_state['values']) as $tlid)
+	 {
+		 if (is_numeric($tlid))
+		 {
+			 db_query('UPDATE {og_titles} SET weight = %d WHERE nid = %d AND tlid = %d',$form_state['values'][$tlid]['weight'],$nid,$form_state['values'][$tlid]['tlid']);
+
+			 // now to change in og_uid_titles as well
+
+			 db_query("UPDATE {og_uid_titles} SET weight = %d WHERE nid = %d AND title = '%s'",$form_state['values'][$tlid]['weight'],$nid,$form_state['values'][$tlid]['title']);
+		 }
+	 }
+
+	 drupal_set_message('Sorting data saved.');
+ } // function og_titles_group_settings_submit
+
+
+ /**
+  * Add a title to this group
+  * @param $form_state
+  * @return $form
+  */
+ function og_titles_add_title(&$form_state,$node)
+ {
+	 if (!is_numeric($node->nid))
+	 {
+		 if (!is_numeric(arg(2)))
+		 {
+			 drupal_set_message(t('error: gid is not numeric: !node or !arg', array('!node' => $node->nid, '!arg' => arg(2))), 'error');
+			 return;
+		 }
+		 else
+		 	$gid = arg(2);
+	 }
+	 else
+		 $gid = $node->nid;
+
+     $form['#redirect'] = 'node/'.$gid.'/titles';
+	 $form['title'] = array(
+	 	'#type' => 'textfield',
+		'#title' => t('Title'),
+		'#description' => t('Enter the title to add.'),
+		'#required' => TRUE
+	 );
+
+     if (is_numeric(arg(4)))
+	 {
+         $result = db_query("select * from {og_titles} where tlid=%d and nid=%d", arg(4), $gid);
+         $title = db_fetch_object($result);
+         $form['title']['#default_value'] = $title->title;
+
+		 $form['tlid'] = array(
+		 	'#type' => 'value',
+			'#value' => $title->tlid,
+		 );
+         $form['#redirect'] = 'node/'.$gid.'/titles/edit/'.$title->tlid;
+	 }
+
+	 $form['nid'] = array(
+	 	'#type' => 'value',
+		'#value' => $gid
+	 );
+
+	 $form['submit'] = array(
+	 	'#type' => 'submit',
+		'#value' => t('Save')
+	 );
+
+	return $form;
+ }  // function og_titles_add_title
+
+
+ /**
+  * og_titles_add_title submit callback
+  * @param $form
+  * @param $form_state
+  */
+ function og_titles_add_title_submit($form, &$form_state)
+ {
+	 $nid = $form_state['values']['nid'];
+     $tlid = $form_state['values']['tlid'];
+
+	 if (isset($form_state['values']['tlid']))
+	 {
+		 db_query("UPDATE {og_titles} SET title = '%s' WHERE nid = %d AND tlid = %d",$form_state['values']['title'],$nid,$tlid);
+	 }
+	 else
+		 db_query("INSERT INTO {og_titles} (nid,title) VALUES (%d,'%s')",$nid,$form_state['values']['title']);
+	 drupal_set_message('Custom title saved.');
+ } // function og_titles_group_settings_submit
+
+
+ /**
+  * og_titles_delete_title - delete member title
+  * @param $node
+  * @param $tlid
+  */
+ function og_titles_delete_title($node,$tlid)
+ {
+	 if (!is_numeric($node->nid))
+	 {
+		 drupal_set_message('Error: node not specified.');
+         drupal_goto('node/'.$node->nid.'/titles');
+		 return;
+	 }
+	 if (!is_numeric($tlid))
+	 {
+		 drupal_set_message('Error: title not specified.');
+         drupal_goto('node/'.$node->nid.'/titles');
+		 return;
+	 }
+
+     if (is_object(_og_titles_get_title($tlid,$node->nid)))
+     {
+        db_query('DELETE FROM {og_titles} WHERE nid = %d and tlid = %d',$node->nid,$tlid);
+	    db_query("DELETE FROM {og_uid_titles} WHERE nid = %d and title = '%s'",$node->nid,$tl->title);
+	    drupal_set_message('Deleted title.');
+     }
+
+     drupal_goto('node/'.$node->nid.'/titles');
+
+ } // function og_titles_delete_title
+
+
+ /**
+  * access callback to see if user can manage their own title and they are in the group
+  * @param $access permissions attribute
+  * @param $node node object
+  * @return boolean 
+  */
+ function og_titles_manage_own_title($node)
+ {
+	 global $user;
+
+	 if (!isset($node))
+		 return FALSE;
+
+	 if ( (!user_access('manage own og title')) && (!og_is_group_member($node, TRUE, $user->uid)) )
+		 return FALSE;
+	 return TRUE;
+ } // function og_titles_manage_own_title
+
+
+ /**
+  * form for user to manage own title for a group
+  * @param $form_state
+  * @param $node
+  */
+ function og_titles_change_title($form_state, $node)
+ {
+	 global $user;
+
+	 if (!isset($node->nid))
+	 {
+		 drupal_set_message('Error: No node id present');
+		 return;
+	 }
+	 $gid = $node->nid;
+
+	 $form['og_title'] = array(
+	 	'#title' => t('Member Title'),
+		'#description' => t('Please choose a member title for yourself for this group.'),
+	 );
+
+    $option = variable_get('og_titles_selection', 'og_titles_text_input');
+      if (function_exists($option))
+          $option($form['og_title'], $form_state, $gid, $user->uid);
+      else
+          drupal_set_message('This title selection option does not exist.', 'error');
+
+	 $form['nid'] = array(
+	 	'#type' => 'value',
+		'#value' => $gid,
+	 );
+
+	 $form['submit'] = array(
+	 	'#type' => 'submit',
+		'#value' => t('Save')
+	 );
+
+	 return $form;
+ } // function og_titles_change_title
+
+
+ /**
+  * submit callback for og_titles_change_title
+  * @param $form
+  * @param $form_state
+  */
+ function og_titles_change_title_submit($form, &$form_state)
+ {
+	 global $user;
+
+	 $option = variable_get('og_titles_selection','og_titles_text_input') . '_save';
+
+     $success = $option($form_state['values']['nid'], $user->uid, $form_state['values']['og_title'], &$form, &$form_state);
+
+     if (!$success)
+         drupal_set_message('Could not save member title.', 'error');
+     else
+         drupal_set_message('Member title saved');
+ } // function og_titles_change_title_submit
+
+
+ /**
+  * member titles admin page
+  * @param $form_state reference to the form
+  * @param $node hopefully the group node object or nid i.e. arg(2)
+  * @return $form the form to be returned
+  */
+ function og_titles_view_titles($form_state, $node)
+ {
+	 if ( ! is_numeric($node->nid) )
+	 {
+	 	if ( ! is_numeric(arg(2)) )
+		{
+		 	drupal_set_message(t('error: gid is not numeric: !node or !arg', array('!node' => $node->nid, '!arg' => arg(2))), 'error');
+		 	return;
+		}
+		else
+			$gid = arg(2);
+	 }
+	 else
+	 	$gid = $node->nid;
+
+	 $option = variable_get('og_titles_selection','og_titles_text_input');
+
+	 $form = array();
+     $form['titles'] = array(
+        '#tree' => TRUE,
+     );
+
+	 $qry = 'SELECT ogu.uid, u.name, ogt.title, ogu.nid FROM {og_uid} ogu LEFT OUTER JOIN {og_uid_titles} ogt ON (ogu.uid = ogt.uid AND ogu.nid = ogt.nid) INNER JOIN {users} u ON (u.uid = ogu.uid)  WHERE ogu.nid = %d';
+	 $res = db_query($qry, $gid);
+
+	 $form['titles'] = array( '#tree' => TRUE );
+
+	 while ( $titles = db_fetch_object($res) )
+     {
+         $form['titles'][$titles->uid] = array(
+            '#title' => $titles->name,
+            '#description' => t('Please choose a member title for '.$titles->name),
+         );
+         $option($form['titles'][$titles->uid], $form_state, $gid, $titles->uid);
+     }
+
+	 $form['nid'] = array(
+	 	'#type' => 'value',
+		'#value' => $gid
+	 );
+
+	 $form['submit'] = array(
+	 	'#type' => 'submit',
+		'#value' => t('Save'),
+	);
+
+
+	 return $form;
+ } // function og_titles_view_titles
+
+
+ /**
+  * submit function for admin page
+  * @param $form
+  * @param $form_state
+  */
+ function og_titles_view_titles_submit($form, &$form_state)
+ {
+	 $nid = $form_state['values']['nid'];
+	 $users = _og_titles_get_uids($nid);
+
+	 $option = variable_get('og_titles_selection','og_titles_text_input') . '_save';
+
+	 foreach ( $users as $usr )
+	 {
+         $success = $option($nid, $usr->uid, $form_state['values']['titles'][$usr->uid], $form, $form_state);
+
+         if (!$success)
+             drupal_set_message('Could not save title for '.$usr->name, 'error');
+	 }
+ } // function og_titles_view_titles_submit
+
+
+ /**
+  * grab the user id and title from the og_uid_titles table (private)
+  * @param $nid the group node id
+  * @return $uids an array of og_uid_titles result objects.
+  */
+ function _og_titles_get_uids($nid)
+ {
+	 $uids = array();
+
+	 if ( !is_numeric($nid) )
+		 return $uids;
+
+	 $res = db_query("SELECT ogu.uid, ogt.title FROM {og_uid} ogu LEFT OUTER JOIN {og_uid_titles} ogt ON (ogu.uid = ogt.uid AND ogu.nid = ogt.nid) INNER JOIN {users} u ON (ogu.uid = u.uid) WHERE ogu.nid = %d",$nid);
+
+	 while ( $og_usr = db_fetch_object($res) )
+		 array_push($uids,$og_usr);
+	
+	return $uids;
+
+ } // function _og_titles_get_uids
+
+
+ /**
+  * fetches the available titles for the group (for selection-based method)
+  * @param $nid the group node id
+  * @return $titles an array of titles
+  */
+ function _og_titles_get_available_titles($nid)
+ {
+	 $titles = array();
+
+	 if (!is_numeric($nid) )
+		 return $titles;
+
+	 $res = db_query('SELECT * FROM {og_titles} WHERE nid = %d ORDER BY weight',$nid);
+
+	 while ( $tl = db_fetch_object($res) )
+	 	$titles[$tl->title] = $tl;
+
+	 return $titles;
+ }  // function _og_titles_get_available_titles
+
+ /**
+  * fetch a single title by title id
+  * @param $nid the group node id
+  * @param $tlid the title id
+  * @return $title object
+  */
+ function _og_titles_get_title($tlid, $nid = NULL, $title = NULL)
+ {
+	 if ($tlid)
+		 $res = db_query('SELECT * FROM {og_titles} WHERE tlid = %d',$tlid);
+	 else
+		 $res = db_query("SELECT * FROM {og_titles} WHERE nid = %d AND title = '%s'",$nid,$title);
+
+	 $tl = db_fetch_object($res);
+
+	 if ($tl->tlid == $tlid || $tl->title == $title)
+		 return $tl;
+	 drupal_set_message('Could not fetch title information for this node.','error');
+     return 0;
+ } // function _og_titles_get_title

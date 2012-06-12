@@ -1,0 +1,6 @@
+; $Id$
+name = Copri Coastal Disasters Investigation
+description = "Provides an application process for joining the investiagtion team."
+core = 6.x
+package = ASCE
+

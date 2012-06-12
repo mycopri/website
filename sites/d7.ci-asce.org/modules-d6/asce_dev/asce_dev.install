@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function asce_dev_schema() {
+	$schema['dev_files'] = array(
+	  'description' => t('TODO: please describe this table!'),
+	  'fields' => array(
+	    'fid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'serial',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+		),
+	    'uid' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	      'default' => 0,
+		),
+	    'filename' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '255',
+	      'not null' => TRUE,
+	      'default' => '',
+		),
+	    'filepath' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '255',
+	      'not null' => TRUE,
+	      'default' => '',
+		),
+	    'filemime' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'varchar',
+	      'length' => '255',
+	      'not null' => TRUE,
+	      'default' => '',
+		),
+	    'filesize' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	      'default' => 0,
+		),
+	    'status' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'not null' => TRUE,
+	      'default' => 0,
+		),
+	    'timestamp' => array(
+	      'description' => t('TODO: please describe this field!'),
+	      'type' => 'int',
+	      'unsigned' => TRUE,
+	      'not null' => TRUE,
+	      'default' => 0,
+		),
+		),
+	  'primary key' => array('fid'),
+	  'indexes' => array(
+	    'status' => array('status'),
+	    'timestamp' => array('timestamp'),
+	    'uid' => array('uid'),
+		),
+	);
+	
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function asce_dev_uninstall() {
+  // Remove all database tables.
+  drupal_uninstall_schema('asce_dev');
+}
+
+
+/**
+ * Implementation of hook_install
+ */
+function asce_dev_install() {
+	db_query("UPDATE {system} SET weight = 1000 WHERE name = 'asce_dev'");
+	drupal_install_schema('asce_dev');
+}

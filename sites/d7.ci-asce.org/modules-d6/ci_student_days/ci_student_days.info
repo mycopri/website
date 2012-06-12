@@ -1,0 +1,6 @@
+; $Id$
+name = CI Student Days
+description = "Provides student days content and functionality."
+core = 6.x
+package = ASCE - ci
+
