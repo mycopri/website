@@ -1,0 +1,5 @@
+
+name = "Email as Username"
+description = "Changes the user reigstration by making the email the username."
+core = "7.x"
+configure = admin/config/system/emailasuser
