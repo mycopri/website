@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 // $Id$
 
@@ -2265,4 +2266,2273 @@ function asce_student_team_page_posts() {
 
 function theme_asce_student_block_theme($block = array()) {
 	
+=======
+<?php
+// $Id$
+
+/*
+ * Implementation of hook_menu().
+ * 
+ * 
+ * The array of items are as follows:
+ * 
+ * "title": Required. The untranslated title of the menu item.
+ * "title callback": Function to generate the title, defaults to t(). If you require only the raw string to be output, set this to FALSE.
+ * "title arguments": Arguments to send to t() or your custom callback.
+ * "description": The untranslated description of the menu item.
+ * "page callback": The function to call to display a web page when the user visits the path. If omitted, the parent menu item's callback will be used instead.
+ * "page arguments": An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component (see arg()).
+ * "access callback": A function returning a boolean value that determines whether the user has access rights to this menu item. Defaults to user_access() unless a value is inherited from a parent menu item..
+ * "access arguments": An array of arguments to pass to the access callback function. Integer values pass the corresponding URL component.
+ * "file": A file that will be included before the callbacks are accessed; this allows callback functions to be in separate files. The file should be relative to the implementing module's directory unless otherwise specified by the "file path" option.
+ * "file path": The path to the folder containing the file specified in "file". This defaults to the path to the module implementing the hook.
+ * "weight": An integer that determines relative position of items in the menu; higher-weighted items sink. Defaults to 0. When in doubt, leave this alone; the default alphabetical order is usually best.
+ * "menu_name": Optional. Set this to a custom menu if you don't want your item to be placed in Navigation.
+ * "type": A bitmask of flags describing properties of the menu item. Many shortcut bitmasks are provided as constants in menu.inc:
+ *          MENU_NORMAL_ITEM: Normal menu items show up in the menu tree and can be moved/hidden by the administrator.
+ *          MENU_CALLBACK: Callbacks simply register a path so that the correct function is fired when the URL is accessed.
+ *          MENU_SUGGESTED_ITEM: Modules may "suggest" menu items that the administrator may enable.
+ *          MENU_LOCAL_TASK: Local tasks are rendered as tabs by default.
+ *          MENU_DEFAULT_LOCAL_TASK: Every set of local tasks should provide one "default" task, that links to the same path as its parent when clicked.
+ * If the "type" key is omitted, MENU_NORMAL_ITEM is assumed.
+ */
+       
+function asce_student_menu() {
+	global $user;
+	
+	$items['student-days'] = array(
+	  'title' => t('Student Days'),
+	  'description' => t('Student Days Main Page'),
+	  'page callback' => 'asce_student_main',
+    'access callback' => TRUE,
+	  'menu_name' => 'Student Days',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'asce_student.pages.inc',
+	);
+  $items['student-days/apply'] = array(
+    'title' => t('Student Days Profile'),
+    'description' => t('Student Days Profile'),
+    'page callback' => 'asce_student_application',
+    'access callback' => 'asce_student_access_apply',
+	  'access arguments' => array('create', 'ci_student_days_seattle'),
+    'menu_name' => 'Student Days',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'asce_student.pages.inc',
+	  'weight' => 1,
+  );
+  /*$items['student-days/challenge'] = array(
+    'title' => t('Student Days Challenge'),
+    'description' => t('Student Days Challenge'),
+    'page callback' => 'asce_student_challenge',
+    'access callback' => TRUE,
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 1,
+  );*/
+  $items['student-days/application'] = array(
+    'title' => t('View'),
+    'description' => t('Application'),
+    'page callback' => 'asce_student_application',
+    'access callback' => 'asce_student_access_apply',
+    'access arguments' => array('create', 'ci_student_days_seattle'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 0,
+  );
+  $items['student-days/application/view'] = array(
+    'title' => t('View'),
+    'description' => t('Application'),
+    'page callback' => 'asce_student_application',
+    'access callback' => 'asce_student_access_apply',
+    'access arguments' => array('create', 'ci_student_days_seattle'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 0,
+  );
+  $items['student-days/application/edit'] = array(
+    'title' => t('Edit'),
+    'description' => t('Application'),
+    'page callback' => 'asce_student_application',
+    'page arguments' => array(TRUE),
+    'access callback' => 'asce_student_access_apply',
+    'access arguments' => array('create', 'ci_student_days_seattle'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 1,
+  );
+  $items['student-days/register'] = array(
+    'title' => t('Create new account'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_register'),
+    'access callback' => 'user_register_access',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'user.pages.inc',
+    'file path' => drupal_get_path('module', 'user'),
+    'weight' => 0,
+  );
+  $items['student-days/login'] = array(
+    'title' => t('Login'),
+    'description' => t('Login'),
+    'page callback' => 'asce_student_main',
+    'access callback' => 'user_is_anonymous',
+    'menu_name' => 'Student Days',
+    'file' => 'asce_student.pages.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 1,
+  );
+  $items['student-days/password'] = array(
+    'title' => 'Request new password',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_pass'),
+    'access callback' => 'user_is_anonymous',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'user.pages.inc',
+    'file path' => drupal_get_path('module', 'user'),
+    'weight' => 2,
+  );
+  $items['student-days/reset/%/%/%'] = array(
+    'title' => 'Reset password',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_pass_reset', 2, 3, 4),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/pass/%user/reset'] = array(
+    'title' => 'Reset password',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_pass_reset_form', 2),
+    'access callback' => 'user_edit_access',
+    'access arguments' => array(2),
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  
+  $items['student-days/admin'] = array(
+    'title' => t('Student Days Administration'),
+    'description' => t('Main'),
+    'page callback' => 'asce_student_admin',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'asce_student.admin.inc',
+    'weight' => -1,
+  );
+  $items['student-days/captains'] = array(
+    'title' => t('Captains'),
+    'description' => t('Main'),
+    'page callback' => 'asce_student_admin_captains',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'asce_student.admin.inc',
+    'weight' => 1,
+  );
+  
+  $items['student-days/staff'] = array(
+    'title' => t('Staff'),
+    'description' => t('Staff Page'),
+    'page callback' => 'asce_student_staff',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 10,
+  );
+  $items['student-days/content/add'] = array(
+    'title' => 'Add a Post',
+    'title callback' => 'check_plain',
+    'page callback' => 'asce_student_content_add',
+    'access callback' => og_is_group_member(arg(1)),
+    'description' => 'Add content to student-days pages',
+    'file' => 'asce_student.pages.inc',
+  );
+
+  $items['student-days/content/add/%'] = array(
+    'title' => 'Add a Post',
+    'title callback' => 'check_plain',
+    'page callback' => 'asce_student_content_add',
+    'page arguments' => array(3),
+    'access callback' => 'asce_student_access',
+    'description' => 'Add content to student-days pages',
+    'file' => 'asce_student.pages.inc',
+  );
+  
+  
+  // Mail Manager menu items
+  $items['student-days/staff/mail/settings'] = array(
+    'title' => 'Student Mail Templates',
+    'description' => 'Configure automated student mail templates.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_mail_settings'),
+    'access arguments' => array('administer users'),
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/staff/mail/settings/edit/%'] = array(
+    'title' => 'Student Mail Templates',
+    'description' => 'Configure automated student mail templates.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_mail_settings', 5),
+    'access arguments' => array('administer users'),
+    'file' => 'asce_student.pages.inc',
+  );  
+  $items['student-days/staff/mail'] = array(
+    'title' => t('Administer Mail to Students'),
+    'description' => t('Send and manage mail to students.'),
+    'page callback' => 'asce_student_mail',
+    'access arguments' => array('administer student days'),
+    'file' => 'asce_student.mail.inc',
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'weight' => 10,
+  );
+  $items['student-days/staff/mail/create'] = array(
+    'title' => t('Create an eMail to Students'),
+    'description' => t('Create an eMail to Students.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_mail_create_form'),
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'file' => 'asce_student.mail.inc',
+    'type' => MENU_CALLBACK,
+    'weight' => 10,
+  );
+  $items['student-days/staff/mail/edit/%'] = array(
+    'title' => t('Create an eMail to Students'),
+    'description' => t('Create an eMail to Students.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_mail_create_form', 4),
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'file' => 'asce_student.mail.inc',
+    'type' => MENU_CALLBACK,
+    'weight' => 10,
+  );
+  $items['student-days/staff/mail/send/reminder/%'] = array(
+    'title' => t('Send a reminder eMail to Students'),
+    'description' => t('Send a reminder eMail to Students.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_mail_send_reminder', 5),
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'file' => 'asce_student.pages.inc',
+    'type' => MENU_CALLBACK,
+    'weight' => 10,
+  );
+  $items['student-days/staff/mail/send/confirm/%'] = array(
+    'title' => t('Send an eMail to ALL Students'),
+    'description' => t('Send an eMail to Students.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_mail_send_confirm'),
+    'access arguments' => array('administer student days', 5),
+    'menu_name' => 'Student Days',
+    'file' => 'asce_student.mail.inc',
+    'type' => MENU_CALLBACK,
+    'weight' => 10,
+  );
+  
+  // Staff Administration stuff
+  $items['student-days/staff/dashboard'] = array(
+    'title' => t('Student Days Dashboard for Administrators'),
+    'description' => t('Student Days Dashboard for Administrators.'),
+    'page callback' => 'asce_student_dashboard',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'file' => 'asce_student.pages.inc',
+    'type' => MENU_CALLBACK,
+    'weight' => 10,
+  );
+  $items['student-days/add-content'] = array(
+    'title' => t('Add Content to this Page'),
+    'description' => t('Staff Page:  Add content to this page'),
+    'page callback' => 'asce_student_add_content',
+    'access callback' => 'asce_student_tab_access',
+    'access arguments' => array('create', 'ci_content'),
+    //'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 11,
+  );
+  
+  // Team Selection stuff
+  $items['student-days/select-team'] = array(
+    'title' => t('Select a team'),
+    'description' => t('Select a team'),
+    'page callback' => 'asce_student_select_team',
+    'access arguments' => array('is a student'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/make-team-first/%'] = array(
+    'title' => t('Make team first choice'),
+    'description' => t('Make team first choice'),
+    'page callback' => 'asce_student_make_team_first',
+    'page arguments' => array(2),
+    'access arguments' => array('is a student'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/remove-team/%'] = array(
+    'title' => t('Remove a team'),
+    'description' => t('Remove a team'),
+    'page callback' => 'asce_student_remove_team',
+    'page arguments' => array(2),
+    'access arguments' => array('is a student'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  
+  $items['student-days/rank-officers/%'] = array(
+    'title' => t('Rank Officers'),
+    'description' => t('Rank Officers'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_rank_officers', 3),
+    'access arguments' => array('rank officers'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+ 
+  // Admin stuff
+  $items['student-days/drupal-mail/%/%'] = array(
+    'title' => t('Send e-mail using Drupal'),
+    'description' => t('Send e-mail using Drupal'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_drupal_mail_form', 2, 3),
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  
+  $items['student-days/send-staff-message'] = array(
+    'title' => t('Send staff a message'),
+    'description' => t('Send staff a message'),
+    'page callback' => 'asce_student_send_staff_message',
+    'access callback' => 'privatemsg_menu_access',
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/set-text/%'] = array(
+    'title' => t('Set the text for Captain Instructions'),
+    'description' => t('Set the text for Captain Instructions'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_student_set_instructions_form', 2),
+    'access arguments' => array('administer nodes'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/update-tables'] = array(
+    'title' => t('Sync the asce_student table'),
+    'description' => t('Sync the asce_student table'),
+    'page callback' => 'asce_student_update',
+    'access arguments' => array('administer nodes'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/send-priv-message/candidates'] = array(
+    'title' => t('Send an email to students (not captains or members)'),
+    'description' => t('Send an email to students (not captains or members)'),
+    'page callback' => 'asce_student_send_students_message',
+    'access arguments' => array('administer nodes'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  ); 
+  $items['student-days/tables'] = array(
+    'title' => t('Administer tables'),
+    'description' => t('Administer tables'),
+    'page callback' => 'asce_student_tables',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  
+  // Team menu items
+  $items['student-days/bio'] = array(
+    'title' => t('Add/Edit Bio'),
+    'description' => t('Add or edit a student bio'),
+    'page callback' => 'asce_student_bio',
+    'access callback' => 'asce_student_access_apply',
+    'access arguments' => array('create', 'ci_student_days_seattle'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  $items['student-days/bio/view/%'] = array(
+    'title' => t('Add/Edit Bio'),
+    'description' => t('Add or edit a student bio'),
+    'page callback' => 'asce_student_bio_view',
+    'page arguments' => array(3),
+    'access callback' => TRUE,
+    //'access arguments' => array('view bios'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+  );
+  
+  /*$items['student-days/check-mess-settings'] = array(
+    'title' => t('A page to check the settings of students for messaging'),
+    'description' => t('A page to check the settings of students for messaging'),
+    'page callback' => 'asce_student_check_mess_settings',
+    'access arguments' => array('administer student days'),
+    'menu_name' => 'Student Days',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_student.pages.inc',
+    'weight' => 11,
+  );*/
+    
+  return $items;
+}
+
+function asce_student_menu_alter(&$items) {
+	$url_prefix = variable_get('privatemsg_url_prefix', 'messages');
+  // Find how many arguments are in the prefix.
+  $url_prefix_arg_count = substr_count($url_prefix, '/') + 1;
+  // Find at which position a %user token is if it exists.
+  $url_prefix_user_arg_position = array_search('%user', explode('/', $url_prefix));
+	$items[$url_prefix . '/new']['type'] = MENU_CALLBACK;
+}
+
+function asce_student_init() {
+  drupal_add_css(drupal_get_path('module', 'asce_student'). '/theme/asce_student.css');
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function asce_student_views_api() {
+  return array(
+    'api' => 2,
+  );
+}
+
+function asce_student_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if (arg(0) == 'node') {
+	if ($node->type == 'ci_student_days_seattle' && !drupal_is_front_page()) {
+		if (arg(0) == 'student-days' && !arg(1)) {
+			drupal_set_title(t(''));
+		}
+		if ((arg(0) == 'student-days' && arg(1)) || arg(0) == 'node') {
+		  $bc[] = l(t('Home'), "");
+		  $bc[] = l(t('Student Days'), "student-days");
+		  drupal_set_breadcrumb($bc);
+		}
+	}
+	if ($node->type == 'ci_student_team') {
+		$bc[] = l(t('Home'), "");
+    $bc[] = l(t('Student Days'), "student-days");
+    drupal_set_breadcrumb($bc);
+	}
+    if ($node->type == 'student_challenge_document' || $node->type == 'student_challenge_question') {
+      $bc[] = l(t('Home'), "");
+      $bc[] = l(t('Student Days'), "student-days");
+      $bc[] = l(t('Student Days Challenge'), "student-days/challenge");
+      drupal_set_breadcrumb($bc);
+    }
+  }    
+	
+	if ($op == 'view') {
+		if (!empty($node->og_groups)) {
+			foreach($node->og_groups as $gid) {
+				$group = node_load($gid);
+				if ($group->type == 'ci_student_team') {
+					$alter = TRUE;
+				}
+			}
+		}
+		if ($node->type == 'advpoll_ranking' && $alter) {
+			$node->content['vote'] = array(
+			  '#value' => asce_student_advpoll_votes(arg(1)),
+			);
+			unset($node->content['group_action']);
+		}
+	}
+	$debug_counter = variable_get('asce_student_debug_counter', 0);
+	 
+	if ($op == 'load') {
+		if ($node->type == 'advpoll_ranking') {
+			return;
+			global $user;
+			foreach($node->og_groups as $nid) {
+				$type = db_result(db_query("SELECT type FROM {node} n WHERE n.nid = %d", $nid));
+				if ($type == 'ci_student_team') {
+					$is_ci_student_team_post = TRUE;
+				}
+			}
+			if ($is_ci_student_team_post) {
+				//drupal_set_message('Is a team post...');
+				$members = asce_student_get_team_members(arg(1));
+				foreach($members as $member) {
+					$names[] = $member['user_object']->profile_first_name;
+				}
+				$list_members = implode(', ', $names);
+				$voted = votingapi_select_votes(array('uid' => $user->uid, 'content_id' => $node->nid));
+				foreach($voted as $key => $choice) {
+					$sql = "SELECT label FROM `advpoll_choices` WHERE nid = %d AND cid = %d;";
+					$choices[] =  db_result(db_query($sql, $node->nid, $choice['tag']));
+				}
+				if ($choices) {
+				  $choices_string = implode(', ', $choices);
+				}				
+				$node->title = 'Congratulations ' . $list_members;
+				$body .= '<p>The first order of business for the three of you is to decide which candidates ';
+				$body .= 'will make up the remaining <u>four</u> members of your team.</p>';
+				$body .= '<p>The process is simple, below is a ranking poll ';
+				$body .= 'that contains the candidates as choices. Add at least four names by clicking on <em><b>Add</b></em> and the names ';
+				$body .= 'will appear on the left. Then rank your candidates by dragging and dropping. Then click on ';
+				$body .= '<em><b>Vote</b></em> button to save your rankings. You can always change your rank by cancelling your vote and then ';
+				$body .= 're-ranking them.</p>';
+				$body .= '<p><b>Also note that there is now a link on the right that allows you to add posts to this page. When you submit your ';
+				$body .= 'vote, add a post to explain some of your reasoning for how you ranked the candidates. The others will be able to ';
+				$body .= 'see this post. You can then start a discussion. Everytime you post something, the others will be notified via an ';
+				$body .= 'e-mail message from ci@ci-asce.org. The message looks a little weird, but basically it will say something has changed on ';
+				$body .= 'the team page and provide you with some links.</b></p>';
+				if ($choices_string) {
+					$body .= '<p><b>Your submitted ranking is: ' . $choices_string . '.</b></p>';
+				}
+				$node->body = $node->teaser = check_markup($body, 2);
+				$node->format = 2;
+				if ($node->nid == arg(1) && !arg(2)) {
+					//drupal_set_message($debug_counter . ' Re-populate the ranking poll for officers.');
+					// Load up the poll node
+					//drupal_set_message('Checking...');
+					$poll_nid = db_result(db_query("SELECT og.nid FROM {og_ancestry} og JOIN {node} n ON og.nid = n.nid
+			                                 WHERE og.group_nid = %d AND n.type = '%s'", arg(1), 'advpoll_ranking'));
+					$poll = node_load($poll_nid);
+					//dsm($poll);
+					// Save the original list of candidates
+					foreach($poll->choice as $candidate) {
+						$old_names[] = $candidate['label'];
+						$old_list[$candidate['label']]['name'] = $candidate['label'];
+						$old_list[$candidate['label']]['cid'] = $candidate['cid'];
+					}
+					// Now directly alter the database entry in advpoll_choices
+					// Get a list of candidates for this team
+					$sql = "SELECT uid FROM {asce_student_teams} WHERE team_id = %d AND is_officer = 0 AND exclude = 0";
+					$results = db_query($sql, arg(1));
+					while($uid = db_result($results)) {
+						$account = user_load($uid);
+						$new_names[] = $account->profile_first_name . ' ' . $account->profile_last_name;
+					}
+					//dsm($new_names);
+
+					// Now compare the new list to the old and remove names
+					foreach($old_list as $index => $value) {
+						if (!in_array($value['name'], $new_names)) {
+							db_query("DELETE FROM {advpoll_choices} WHERE cid = %d", $value['cid']);
+							$changed = TRUE;
+						}
+					}
+
+					// Now add new names to list
+					foreach($new_names as $index => $value) {
+						if(!in_array($value, $old_names)) {
+							//dsm($value);
+							$row = array(
+					  'nid' => $poll_nid,
+					  'label' => $value,
+							);
+							drupal_write_record('advpoll_choices', $row);
+							$changed = TRUE;
+						}
+					}
+					//$debug_counter = $debug_counter + 1;
+					//variable_set('asce_student_debug_counter', $debug_counter);
+				}
+				//drupal_set_message($debug_counter . ' ' . $node->nid . ', ' . $node->title);
+				//variable_set('asce_student_debug_counter', $debug_counter + 1);
+				if ($changed) {
+					drupal_set_message('There were changes in the candidates. You need to refresh this page.', 'warning');
+				}
+			}
+		}
+	} // End of if
+}
+
+function asce_student_block($op = 'list', $delta = 0, $edit = array()) {
+  
+  if ($op == 'list') {
+    // returns array, with the following key-value pairs:
+    //
+    // 'info': (required) The human-readable name of the block. This is used to identify the block on administration screens, and is not displayed to non-administrative users.
+    // 'cache': A bitmask of flags describing how the block should behave with respect to block caching. The following shortcut bitmasks are provided as constants in block.module:
+    //    BLOCK_CACHE_PER_ROLE (default): The block can change depending on the roles the user viewing the page belongs to.
+    //    BLOCK_CACHE_PER_USER: The block can change depending on the user viewing the page. This setting can be resource-consuming for sites with large number of users, and should only be used when BLOCK_CACHE_PER_ROLE is not sufficient.
+    //    BLOCK_CACHE_PER_PAGE: The block can change depending on the page being viewed.
+    //    BLOCK_CACHE_GLOBAL: The block is the same for every user on every page where it is visible.
+    //    BLOCK_NO_CACHE: The block should not get cached.
+    // 'weight': (optional) Initial value for the ordering weight of this block. Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen.
+    // 'status': (optional) Initial value for block enabled status. (1 = enabled, 0 = disabled). Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen.
+    // 'region': (optional) Initial value for theme region within which this block is set. Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen. Note: If you set a region that isn't available in the currently enabled theme, the block will be disabled.
+    // 'visibility': (optional) Initial value for the visibility flag, which tells how to interpret the 'pages' value. Possible values are:
+    //    0: Show on all pages except listed pages. 'pages' lists the paths where the block should not be shown.
+    //    1: Show only on listed pages. 'pages' lists the paths where the block should be shown.
+    //    2: Use custom PHP code to determine visibility. 'pages' gives the PHP code to use.
+    //  Most modules do not provide an initial value for 'visibility' or 'pages', and any value provided can be modified by a user on the block configuration screen.
+    // 'pages': (optional) See 'visibility' above.
+
+    $blocks[0]['info'] = t('Student Days - Application');
+    $blocks[0]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[1]['info'] = t('Student Days - Things you can do');
+    $blocks[1]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[2]['info'] = t('Student Days - Administration');
+    $blocks[2]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[3]['info'] = t('Student Days - Team Status');
+    $blocks[3]['cache'] = BLOCK_NO_CACHE;
+
+    $blocks[4]['info'] = t('Student Days - Messages');
+    $blocks[4]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[5]['info'] = t('Student Days - Team Links');
+    $blocks[5]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[6]['info'] = t('Student Days - Team Roster');
+    $blocks[6]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[7]['info'] = t('Student Days - Team Captain Admin');
+    $blocks[7]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[8]['info'] = t('Student Days - Front');
+    $blocks[8]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[9]['info'] = t('Student Days - Team Captain Seek');
+    $blocks[9]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[10]['info'] = t('Student Days - Challenge Leaders');
+    $blocks[10]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[11]['info'] = t('Student Days - Bio');
+    $blocks[11]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[12]['info'] = t('Student Days - Team Page - Header');
+    $blocks[12]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[13]['info'] = t('Student Days - Team Page - Team Status');
+    $blocks[13]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[14]['info'] = t('Student Days - Team Page - Selected Teams');
+    $blocks[14]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[15]['info'] = t('Student Days - Team Page - Officers');
+    $blocks[15]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[16]['info'] = t('Student Days - Selected Captains');
+    $blocks[16]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[17]['info'] = t('Student Days - Activity');
+    $blocks[17]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[18]['info'] = t('Student Days - Your Selected Teams');
+    $blocks[18]['cache'] = BLOCK_NO_CACHE;    
+    
+    $blocks[19]['info'] = t('Student Days - Main Front Block');
+    $blocks[19]['cache'] = BLOCK_NO_CACHE;
+
+    $blocks[20]['info'] = t('Student Days - River of News');
+    $blocks[20]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[21]['info'] = t('Student Days - Member Candidates');
+    $blocks[21]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[22]['info'] = t('Student Days - Report a Problem');
+    $blocks[22]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[23]['info'] = t('Student Days - Teams per candidate');
+    $blocks[23]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[24]['info'] = t('Student Days - My bio');
+    $blocks[24]['cache'] = BLOCK_NO_CACHE;
+
+    $blocks[25]['info'] = t('Student Days - Main Page');
+    $blocks[25]['cache'] = BLOCK_CACHE_GLOBAL;
+    
+    $blocks[26]['info'] = t('Student Days - Main Page Links');
+    $blocks[26]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[27]['info'] = t('Student Days - Challenge');
+    $blocks[27]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[28]['info'] = t('Student Days - Test');
+    $blocks[28]['cache'] = BLOCK_NO_CACHE;
+    
+    $blocks[29]['info'] = t('Student Days - RFI');
+    $blocks[29]['cache'] = BLOCK_NO_CACHE;
+    
+    return $blocks;
+  }
+
+  if ($op == 'view') {
+  	module_load_include('inc', 'asce_student', 'asce_student.blocks');
+  	switch ($delta) {
+  		case 0:
+        $block = asce_student_block_application();
+        break;
+  		case 1:
+  	  	$block = asce_student_block_things_you_can_do();
+        break;
+  		case 2:
+  		  $block = asce_student_block_administration();
+  		  break;
+  		case 3:
+  			$block = asce_student_block_team_status();
+        break;
+  		case 4:
+  			$block = asce_student_block_messages();
+  			break;
+      case 5:
+        $block = asce_student_block_team_links();
+        break;
+      case 6:
+        $block = asce_student_block_team_roster();
+        break;
+      case 7:
+        $block = asce_student_block_team_captain_admin();
+        break;
+      case 8:
+        $block = asce_student_block_front();
+        break;
+      case 9:
+      	$block = asce_student_block_team_captain();
+        break;
+      case 10:
+        $block = asce_student_block_leaders();
+        break;
+      case 11:
+        $block = asce_student_block_bio();
+        break;
+      case 12:
+        $block = asce_student_block_team_page('header');
+        break;
+      case 13:
+        $block = asce_student_block_team_page('team status');
+        break;
+      case 14:
+        $block = asce_student_block_team_page('selected teams');
+        break;
+      case 15:
+        $block = asce_student_block_team_page('roster');
+        break;
+      case 16:
+        $block = asce_student_block_selected_captains();
+        break;
+      case 17:
+        $block = asce_student_block_activity();
+        break;
+      case 18:
+      	$block = asce_student_block_your_selection();
+      	break;
+      case 19:
+        $block = asce_student_block_main_front();
+        break;
+      case 20:
+        $block = asce_student_block_river_of_news();
+        break;
+      case 21:
+        $block = asce_student_block_team_page('member candidates');
+        break;
+      case 22:
+        $block = asce_student_block_report_problem();
+        break;
+      case 23:
+        $block = asce_student_block_teams_per_candidate();
+        break;
+      case 24:
+        $block = asce_student_block_my_bio();
+        break;
+      case 25:
+      	$block = asce_student_block_main();
+      	break;
+      case 26:
+        $block = asce_student_block_main_links();
+        break;
+      case 27:
+        $block = asce_student_block_challenge();
+        break;	
+      case 28:
+        $block = asce_student_block_test();
+        break;
+      case 29:
+        $block = asce_student_block_rfi();
+        break;  
+  	}
+  	return $block;
+  }
+
+  if ($op == 'configure') {
+  	$form = array();
+  	if ($delta == 0) {
+  		$form['field1']['authenticated'] = array(
+   	    '#type' => 'textarea',
+   	    '#title' => t('Content to display when user is logged in'),
+   	    '#default_value' => t('User is not logged in display something.'),
+  		);
+  		$form['field1']['format'] = filter_form(2, 1, array('field1'));
+  		 
+  		$form['field2']['anonymous'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Content to display when user is <em><b>not</b></em> logged in.'),
+        '#default_value' => t('User is logged in display something.'),
+  		);
+  		$form['field2']['format'] = filter_form(2, 1, array('field2'));
+
+  		$form['field3']['auth_started'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Content to display when user has finished application.'),
+        '#default_value' => t('User has finished application.'),
+  		);
+  		$form['field3']['format'] = filter_form(2, 1, array('field3'));
+  	}
+  	elseif ($delta == 19) {
+  		$form['content'] = array(
+        '#type' => 'textarea',
+        '#title' => 'Content for block',
+        '#default_value' => variable_get('asce_student_block_main_front_content', 'test'),
+        '#rows' => 20,
+  		);
+  		$form['format'] = filter_form(2);
+  	}
+  	return $form;
+  }
+  
+  if ($op == 'save') {
+    if ($delta == 0) {
+    	$message .= '<p>Welcome!</p><p>You are here because you have been nominated by your faculty advisor as a leader ';
+	    $message .= 'in your university program, to apply to attend the CI Student Days in Seattle.  The first ';
+	    $message .= 'step is to create a new account on this website by clicking that option below and filling ';
+	    $message .= 'in the requested information.  Once that is done, you will see a link to begin your Student ';
+	    $message .= 'Days online application.  You will be asked to upload a resume and provide a list of courses ';
+	    $message .= 'you have taken in your program - you may want to have that information available before ';
+	    $message .= 'you get started.  You can fill out the application in stages - just remember to hit the save ';
+	    $message .= 'button at the bottom of the page when you stop - then you can return and complete the ';
+	    $message .= 'application at another time without starting over.</p>';
+	    
+	    $message .= '<p>We are looking forward to getting to know you.  If you have questions or have any ';
+	    $message .= 'difficulties please contact Erin Santiago at (703) 295-6076 or esantiago@asce.org.</p>';
+	    
+	    $message .= '<p>The application will be open until April 18th.  At that time the acceptance ';
+	    $message .= 'committee will review all applications and select the 35 ';
+	    $message .= check_plain('students who will be sponsored to attend this year\'s Student Days.');
+	    $message .= '</p>';
+    	variable_set('asce_student_days_block_authenticated', $edit['student_days_block']['authenticated'] ? $edit['student_days_block']['authenticated'] : $message);
+    	variable_set('asce_student_days_block_anonymous', $edit['student_days_block']['anonymous']);
+    	variable_set('asce_student_days_block_auth_started', $edit['student_days_block']['auth_started']);
+    }
+    elseif( $delta == 19) {
+    	variable_set('asce_student_block_main_front_content',$edit['content']);
+    }
+  }
+}
+
+function asce_student_tab_access($op, $type) {
+	if (user_access('administer student days')) {
+    if (node_access($op, $type)) {
+      if (arg(1) != 'staff' ) {
+        return TRUE;
+      }
+    }
+  }
+}
+
+function asce_student_not_anonymous() {
+	return !user_is_anonymous() ? TRUE : FALSE;
+}
+
+function asce_student_access_apply($op, $node, $account = NULL) {
+	$return = node_access($op, $node, $account);
+	if ($return) {
+		$return = user_is_anonymous() ? FALSE : TRUE;
+	}
+	return $return;
+}
+
+function asce_student_perm() {
+	$perms = array(
+	  'administer student days',
+	  'view student days content',
+	  'post team application',
+	  'receive student messages',
+	  'is a leader',
+	  'is a captain',
+	  'is an officer',
+	  'is a team member',
+	  'is a student',
+	  'rank officers',
+	  'rank members',
+	  'view all team pages',
+	  'view own team pages',
+	  'view officer candidates',
+	  'view captain content',
+	  'view student content',
+	  'view bios',
+	  'join a team',
+	);
+	return $perms;
+}
+
+function asce_student_form_alter(&$form, &$form_state, $form_id) {
+	global $user;
+	// Begin form overrides for the student days application
+	//drupal_set_message('$form_id is ' . $form_id);
+	if ($form_id == 'ci_student_days_seattle_node_form') {
+    // We only want to redirect if it is in the student-days part of the site
+		if (arg(0) == 'student-days') {
+      $form['buttons']['submit']['#submit'][] = 'asce_student_node_form_submit';
+    }
+    //dsm($form);
+		drupal_set_title(t('CI Student Days Application'));
+		if (!user_access('administer student days')) {
+		  $form['notifications']['#access'] = FALSE;
+		  $form['title']['#default_value'] = 'Application for ' . $user->profile_first_name . ' ' . $user->profile_last_name;
+		  $form['title']['#access'] = FALSE;
+		  $form['revision_information']['#access'] = FALSE;
+		}
+	}
+  // End form overrides for the student days application	
+	
+	// Begin form overrides for user registration
+	if ($form_id == 'user_login' && arg(0) == 'student-days') {
+    $message .= '<p>Welcome!</p><p>You are here because you have been nominated by your faculty advisor as a leader ';
+    $message .= 'in your university program, to apply to attend the CI Student Days in Seattle.  The first ';
+    $message .= 'step is to create a new account on this website by clicking that option below and filling ';
+    $message .= 'in the requested information.  Once that is done, you will see a link to begin your Student ';
+    $message .= 'Days online application.  You will be asked to upload a resume and provide a list of courses ';
+    $message .= 'you have taken in your program - you may want to have that information available before ';
+    $message .= 'you get started.  You can fill out the application in stages - just remember to hit the save ';
+    $message .= 'button at the bottom of the page when you stop - then you can return and complete the ';
+    $message .= 'application at another time without starting over.</p>';
+    
+    $message .= '<p>We are looking forward to getting to know you.  If you have questions or have any ';
+    $message .= 'difficulties please contact Erin Santiago at (703) 295-6076 or esantiago@asce.org.</p>';
+    
+    $message .= '<p>The application will be open until April 18th.  At that time the acceptance ';
+    $message .= 'committee will review all applications and select the 35 ';
+    $message .= check_plain('students who will be sponsored to attend this year\'s Student Days.');
+    $message .= '</p>';
+    
+		$form['#submit'][] = 'asce_student_login_submit';
+	}
+	
+	if ($form_id == 'user_register' && arg(0) == 'student-days') {
+		// Override the user settings for account creation
+		if ($form['account']['pass']['#description'] == t('To change the current user password, enter the new password in both fields.')) {
+			// Do nothing
+		}
+		else {
+			$form['account']['pass'] = array(
+      '#type' => 'password_confirm',
+      '#description' => t('Provide a password for the new account in both fields.'),
+      '#required' => TRUE,
+      '#size' => 25,
+			);
+		}
+		$form['#submit'] = array();
+		$form['#submit'][] = 'asce_student_register_submit';
+	}
+	// End form overrides for user registration
+	
+	// Begin form overrides for ci_student_team_node_form
+	if ($form_id == 'ci_student_team_node_form') {
+	  if (!user_access('administer nodes')) {
+		  $form['notifications']['#access'] = FALSE;
+		  $form['og_selective']['#access'] = FALSE;
+		  $form['og_register']['#access'] = FALSE;
+		  $form['og_directory']['#access'] = FALSE;
+		  $form['og_private']['#access'] = FALSE;
+		  $form['attachments']['#access'] = FALSE;
+		  //dsm($form);
+	  }
+	}
+  // End form overrides for ci_student_team_node_form	
+	
+	if ($form_id == 'privatemsg_new' || $form_id == 'privatemsg_form_reply') {
+		if (!user_access('administer student days')) {
+		  $form['recipient']['#access'] = FALSE;
+		}
+		$form['format']['#access'] = FALSE;
+		$form['attachments']['#access'] = FALSE;
+	}
+	
+	if ($form_id == 'ci_content_node_form' && $_GET['student-announcement']) {
+		$form['field_student_days_content']['#default_value'][0]['value']=1;
+		$form['field_student_days_announcement']['#default_value'][0]['value']=1;
+		// turn a lot of fields off to simplify the form
+		if (!user_access('administer nodes')) {
+		  $form['notifications']['#access'] = FALSE;
+		}
+		$items = array('menu', '');
+	}
+	
+  if ($form_id == 'advpoll_ranking_node_form' && $_GET['auto']) {
+  	$node = node_load($_GET['gids'][0]);
+  	$form['title']['#default_value'] = $node->title . ': Officer Ranking';
+  	$form['notifications']['notifications_content_disable']['#default_value'] = TRUE;
+  	$form['choice'][1]['label']['#default_value'] = 'Temporary';
+  	$form['choice'][2]['label']['#default_value'] = 'Temporary';
+  	$form['settings']['writeins']['#default_value'] = FALSE;
+  }
+  
+  if ($form_id == 'ci_content_node_form' && $form['#node']->ci_content) {
+  	if (!$form['#node']->format) {
+  		foreach($form['body_field']['format'] as $index => $value) {
+  			if(is_int($index)) {
+  				$form['body_field']['format'][$index]['#default_value'] = 2;
+  			}
+  		}
+  	}
+  	dsm($form);
+  	//drupal_set_message('<pre>' . print_r($form['og_nodeapi'], TRUE) . '</pre>');
+  	drupal_set_title(t('Add a Post'));
+  	$form['group_page']['#access'] = FALSE;
+  	$form['field_front_layout']['#access'] = FALSE;
+  	$form['og_nodeapi']['visible']['og_groups']['#disabled'] = TRUE;
+  	$form['og_nodeapi']['visible']['og_public']['#disabled'] = TRUE;
+  	$form['og_nodeapi']['visible']['og_public']['#default_value'] = 0;
+  	$form['og_nodeapi']['visible']['og_public']['#access'] = FALSE;
+  	$form['notifications']['#access'] = FALSE;
+  	$form['attachments']['#access'] = FALSE;
+  	$form['field_image']['#access'] = FALSE;
+  }
+  
+  if ($form_id == 'asce_student_drupal_mail_form') {
+  	//dsm($form);
+  }
+  
+  if ($form_id == 'student_challenge_question_node_form') {
+  	$form['title']['#default_value'] = $user->uid . '-student challenge question-' . format_date(time());
+  	$form['title']['#access'] = FALSE;
+  	dsm($form);
+  }
+}
+
+function asce_student_theme() {
+  $return = array(
+    'asce_student_staff_menu' => array(
+      'arguments' => array('content' => NULL),
+      'file' => 'asce_student.pages.inc',
+    ),
+    'asce_student_block_style' => array(
+      'arguments' => array('content' => NULL, 'width' => '33%', 'float' => FALSE),
+      'file' => 'asce_student.pages.inc',
+    ),
+    'asce_panels_pane' => array(
+      'arguments' => array('output' => array(), 'pane' => array(), 'display' => array()),
+      'path' => drupal_get_path('module', 'asce_panels'),
+      'template' => 'asce-panels-pane',
+    ),
+    'asce_student_rank_officers_table' => array(
+      'arguments' => array('form' => NULL),
+    ),
+    'asce_student_block_theme' => array(
+      'arguments' => array('block' => array()),
+    ),
+  );
+  return $return;
+}
+
+function asce_student_login_submit($form, &$form_state) {
+  global $user;
+  if ($user->uid) {
+    $form_state['redirect'] = 'student-days';
+    return;
+  }
+}
+
+function asce_student_register_submit($form, &$form_state) {
+	asce_student_logintoboggan_user_register_submit($form, &$form_state);
+	$form_state['redirect'] = 'student-days';
+}
+
+/**
+ * Custom submit function for student registration from student days page
+ *
+ * @ingroup logintoboggan_form
+ */
+function asce_student_logintoboggan_user_register_submit($form, &$form_state) {
+
+  $reg_pass_set = TRUE;
+
+  // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+  // handle things a bit differently.
+  $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
+
+  // If we are allowing user selected passwords then skip the auto-generate function
+  // The new user's status should default to the site settings, unless reg_passwd_set == 1
+  // (immediate login, we are going to assign a pre-auth role), and we want to allow
+  // admin approval accounts access to the site.
+  if ($reg_pass_set) {
+    $pass = $form_state['values']['pass'];
+    $status = 1;
+  }
+  else {
+    $pass = user_password();
+    $status = variable_get('user_register', 1) == 1;
+  }
+
+  // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
+  if (isset($form_state['values']['conf_mail'])) { unset($form_state['values']['conf_mail']); }
+
+  if (array_intersect(array_keys($form_state['values']), array('uid', 'roles', 'init', 'session', 'status'))) {
+    watchdog('security', 'Detected malicious attempt to alter protected user fields.', array(), WATCHDOG_WARNING);
+    $form_state['redirect'] = 'student-days/register';
+    return;
+  }
+
+  // The unset below is needed to prevent these form values from being saved as user data.
+  unset($form_state['values']['form_token'], $form_state['values']['submit'], $form_state['values']['op'], $form_state['values']['notify'], $form_state['values']['form_id'], $form_state['values']['form_build_id'], $form_state['values']['affiliates'], $form_state['values']['destination']);
+
+  // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
+  // and the pre-auth role isn't anon or auth user.
+  $validating_id = logintoboggan_validating_id();
+  $form_state['values']['roles'] = array(2 => 'authenticated user', 10 => 'Student');
+  $roles = isset($form_state['values']['roles']) ? array_filter($form_state['values']['roles']) : array();
+  if ($reg_pass_set && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
+    $roles[$validating_id] = 1;
+  }
+
+  $edit = array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status));
+  $account = user_save('', $edit);
+  // Add plain text password into user account to generate mail tokens.
+  $account->password = $pass;
+  $form_state['user'] = $account;
+
+  watchdog('user', 'New user: %name (%email).', array('%name' => $account->name, '%email' => $account->mail), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
+
+  $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : NULL;
+
+  // Compose the appropriate user message--admin approvals don't require a validation email.
+  if($reg_pass_set) {
+    if ($pre_auth) {
+      $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+    }
+    else {
+      $message = '';
+    }
+  } else {
+    $message = t('Your password and further instructions have been sent to your e-mail address.');
+  }
+
+  // Create new user account, no administrator approval required.
+  $mailkey = 'register_no_approval_required';
+
+  // Mail the user.
+  _logintoboggan_mail_notify($mailkey, $account, $login_url);
+
+  drupal_set_message($message);
+
+  // where do we need to redirect after registration?
+  $redirect = 'student-days';
+  $form_state['redirect'] = asce_student_logintoboggan_process_login($account, $edit, $redirect);
+}
+
+/**
+ * Actually log the user on
+ *
+ * @param object $account
+ *   The user object.
+ * @param array $edit
+ *   An array of form values if a form has been submitted.
+ * @param array $redirect
+ *   An array of key/value pairs describing a redirect location, in the form
+ *   that drupal_goto() will understand. Defaults to:
+ *     'path' => 'user/'. $user->uid
+ *     'query' => NULL
+ *     'fragment' => NULL
+ */
+
+function asce_student_logintoboggan_process_login($account, $edit, $redirect = array()){
+  global $user;
+
+  $user = user_load($account->uid);
+
+  // Call core's function to finalize the login.
+  user_authenticate_finalize($edit);
+
+  if (isset($redirect['path']) && $redirect['path'] != '') {
+    return $redirect;
+  }
+}
+
+function asce_student_node_form_validate($form, &$form_state) {
+	global $user;
+  $form_state['values']['title'] = 'Application for ' . $user->profile_first_name . ' ' . $user->profile_last_name;
+}
+
+function asce_student_node_form_submit($form, &$form_state) {
+	$form_state['redirect'] = 'student-days/application';
+}
+
+function asce_student_days_seattle_node_form_submit($form, &$form_state) {
+  $form_state['redirect'] = 'student-days';
+}
+
+function _asce_student_process_application($app) {
+	global $user;
+	$status = $app['status'];
+	$node = $app['data'];
+  $output .= '<p><a href="student-days/application"><strong><span style="font-size: medium;">';
+	$output .= 'View/Edit your Profile/Application</span></strong></a></p>';
+	return $output;
+}
+
+/*function _asce_student_admin_block() {
+	// Check the ci_student_days_seattle content type and analyze it
+	$sql = "SELECT * FROM {content_group_fields} WHERE type_name = 'ci_student_days_seattle'";
+	$results = db_query($sql);
+	$output .= '<p>';
+	while ($row = db_fetch_object($results)) {
+		//$output .= $row->group_name . ' -> ' . $row->field_name . '<br/>';
+	}
+	$output .= '</p>';
+	return $output;
+}*/
+
+function _asce_student_upload_picture_submit($form, &$form_state) {
+	dsm($form_state);
+	drupal_goto('node/6401');
+}
+
+function asce_student_upload_picture_form (&$form_state, $user) {	
+	$edit['picture'] = $user->picture;
+	$form['#attributes'] = array('enctype' => "multipart/form-data");
+	$form['instructions'] = array(
+	  '#value' => '<p>In order to start your profile, you must upload a photo of yourself.</p>',
+	);
+	//'upload' will be used in file_check_upload()
+	if (variable_get('user_pictures', 0)) {
+		$form['picture'] = array('#type' => 'fieldset', '#title' => t('Picture'), '#weight' => 1);
+		$picture = theme('user_picture', (object)$edit);
+		if ($edit['picture']) {
+			$form['picture']['current_picture'] = array('#value' => $picture);
+			//$form['picture']['picture_delete'] = array('#type' => 'checkbox', '#title' => t('Delete picture'), '#description' => t('Check this box to delete your current picture.'));
+		}
+		else {
+			//$form['picture']['picture_delete'] = array('#type' => 'hidden');
+		}
+		$form['picture']['picture_upload'] = array('#type' => 'file', '#title' => t('Upload picture'), '#size' => 48, '#description' => t('Your virtual face or picture. Maximum dimensions are %dimensions and the maximum size is %size kB.', array('%dimensions' => variable_get('user_picture_dimensions', '85x85'), '%size' => variable_get('user_picture_file_size', '30'))) .' '. variable_get('user_picture_guidelines', ''));
+		$form['picture']['submit'] = array(
+		  '#type' => 'submit', 
+		  '#value' => t('Upload'),
+		);
+		//$form['#validate'][] = 'user_validate_picture';
+		//$form['#submit'][] = 'user_validate_picture';
+	}
+	$form['#user'] = $user;
+	$form['#uid'] = $user->uid;
+	return $form;
+}
+
+/*
+ *   Taken from user module
+ */
+function asce_student_upload_picture_form_validate($form, &$form_state) {
+  // If required, validate the uploaded picture.
+  $validators = array(
+    'file_validate_is_image' => array(),
+    'file_validate_image_resolution' => array(variable_get('user_picture_dimensions', '85x85')),
+    'file_validate_size' => array(variable_get('user_picture_file_size', '30') * 1024),
+  );
+  if ($file = file_save_upload('picture_upload', $validators)) {
+    // Remove the old picture.
+    if (isset($form_state['values']['_account']->picture) && file_exists($form_state['values']['_account']->picture)) {
+      file_delete($form_state['values']['_account']->picture);
+    }
+
+    // The image was saved using file_save_upload() and was added to the
+    // files table as a temporary file. We'll make a copy and let the garbage
+    // collector delete the original upload.
+    $info = image_get_info($file->filepath);
+    $destination = variable_get('user_picture_path', 'pictures') .'/picture-'. $form['#uid'] .'.'. $info['extension'];
+    if (file_copy($file, $destination, FILE_EXISTS_REPLACE)) {
+      $form_state['values']['picture'] = $file->filepath;
+    }
+    else {
+      form_set_error('picture_upload', t("Failed to upload the picture image; the %directory directory doesn't exist or is not writable.", array('%directory' => variable_get('user_picture_path', 'pictures'))));
+    }
+  }
+}
+
+function asce_student_upload_picture_form_submit($form, &$form_state) {
+  //drupal_set_message($_FILES['files']['name']['picture_upload']);
+  $account = $form['#user'];
+  user_save($account, array('picture'=>$form_state['values']['picture']));
+  drupal_goto('node/6401');
+}
+
+function asce_student_validate_picture($form, &$form_state) {
+  drupal_set_message('validate' . kpr($form_state, TRUE));
+  $file = file_save_upload('upload');
+  dsm($file);
+  return;
+	// If required, validate the uploaded picture.
+  $validators = array(
+    'file_validate_is_image' => array(),
+    'file_validate_image_resolution' => array(variable_get('user_picture_dimensions', '85x85')),
+    'file_validate_size' => array(variable_get('user_picture_file_size', '30') * 1024),
+  );
+  if ($file = file_save_upload('picture_upload', $validators)) {
+    // Remove the old picture.
+    if (isset($form_state['values']['_account']->picture) && file_exists($form_state['values']['_account']->picture)) {
+      file_delete($form_state['values']['_account']->picture);
+    }
+
+    // The image was saved using file_save_upload() and was added to the
+    // files table as a temporary file. We'll make a copy and let the garbage
+    // collector delete the original upload.
+    $info = image_get_info($file->filepath);
+    $destination = variable_get('user_picture_path', 'pictures') .'/picture-'. $form['#uid'] .'.'. $info['extension'];
+    if (file_copy($file, $destination, FILE_EXISTS_REPLACE)) {
+      $form_state['values']['picture'] = $file->filepath;
+    }
+    else {
+      form_set_error('picture_upload', t("Failed to upload the picture image; the %directory directory doesn't exist or is not writable.", array('%directory' => variable_get('user_picture_path', 'pictures'))));
+    }
+  }
+}
+
+/*
+ *  Return the status of a student application
+ */
+function asce_student_application_status($user) {
+	$app['status'] = 'NOT STARTED';
+	$sql = "SELECT * FROM {node} WHERE type = 'ci_student_days_seattle' AND uid = %d";
+  $results = db_query($sql, $user->uid);
+  if($application = db_fetch_object($results)) {
+  	$app['status'] = 'STARTED';
+  	$app['data'] = node_load($application->nid);
+  };
+  return $app;
+}
+
+function _asce_student_drupal_get_just_form_array($form_id) {
+	module_load_include('inc', 'node', 'node.pages');
+	$node = array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''), 'type' => $type, 'language' => '');
+  $form_state = array('storage' => NULL, 'submitted' => FALSE);
+
+  $args = func_get_args();
+  $args[] = $node; 
+  $cacheable = FALSE;
+
+  if (isset($_SESSION['batch_form_state'])) {
+    // We've been redirected here after a batch processing : the form has
+    // already been processed, so we grab the post-process $form_state value
+    // and move on to form display. See _batch_finished() function.
+    $form_state = $_SESSION['batch_form_state'];
+    unset($_SESSION['batch_form_state']);
+  }
+  else {
+    // If the incoming $_POST contains a form_build_id, we'll check the
+    // cache for a copy of the form in question. If it's there, we don't
+    // have to rebuild the form to proceed. In addition, if there is stored
+    // form_state data from a previous step, we'll retrieve it so it can
+    // be passed on to the form processing code.
+    if (isset($_POST['form_id']) && $_POST['form_id'] == $form_id && !empty($_POST['form_build_id'])) {
+      $form = form_get_cache($_POST['form_build_id'], $form_state);
+    }
+
+    // If the previous bit of code didn't result in a populated $form
+    // object, we're hitting the form for the first time and we need
+    // to build it from scratch.
+    if (!isset($form)) {
+      $form_state['post'] = $_POST;
+      // Use a copy of the function's arguments for manipulation
+      $args_temp = $args;
+      $args_temp[0] = &$form_state;
+      array_unshift($args_temp, $form_id);
+
+      $form = call_user_func_array('drupal_retrieve_form', $args_temp);
+      $form_build_id = 'form-'. md5(uniqid(mt_rand(), TRUE));
+      $form['#build_id'] = $form_build_id;
+      drupal_prepare_form($form_id, $form, $form_state);
+      // Store a copy of the unprocessed form for caching and indicate that it
+      // is cacheable if #cache will be set.
+      $original_form = $form;
+      $cacheable = TRUE;
+      unset($form_state['post']);
+    }
+    $form['#post'] = $_POST;
+  }
+  return $form;  
+}
+
+function _asce_student_breadcrumb($links = array()) {
+	$breadcrumb = drupal_get_breadcrumb();
+	$breadcrumb[] = l('Student Days', 'student-days');
+	if ($links) {
+	  $breadcrumb = array_merge($breadcrumb, $links);
+	}
+	//dsm($links);
+	//dsm($breadcrumb);
+	drupal_set_breadcrumb($breadcrumb);
+}
+
+function asce_student_messages($student = FALSE) {
+	global $user;
+	if ($student) {
+	  _asce_student_breadcrumb();
+	}
+	module_load_include('inc', 'privatemsg', 'privatemsg.pages');
+	return drupal_get_form('privatemsg_list', 'inbox', $user);
+}
+
+/**
+ * Checks access to a menu entry.
+ *
+ * Contains special checks if the privatemsg menu entries are displayed as a
+ * local task in the profile.
+ *
+ * @param $permission
+ *   Permission string, defaults to read privatemsg
+ *
+ * @param $account
+ *   User account to check permissions. If NULL, default to current user.
+ *
+ * @param $deny_if_other
+ *   Deny access if user is viewing another user's messages and does not have
+ *   proper permissions.
+ *
+ * @return
+ *   TRUE if user has access, FALSE if not.
+ */
+function asce_student_privatemsg_menu_access() {
+  $access = privatemsg_menu_access();
+  if ($access) {
+  	if (arg(0) != 'student-days') {
+  		return TRUE;
+  	}
+  }  
+}
+
+function asce_student_privatemsg_menu_access_student() {
+  $access = privatemsg_menu_access();
+  if ($access) {
+    if (arg(0) == 'student-days') {
+      return TRUE;
+    }
+  }  
+}
+
+/**
+ * Clean up the panel pane variables for the template.
+ */
+function template_preprocess_asce_panels_pane($vars) {
+  $content = $vars['output'];
+  // basic classes
+  $vars['classes'] = 'asce-panel-pane';
+  $vars['id'] = '';
+
+  // Add some usable classes based on type/subtype
+  ctools_include('cleanstring');
+  $type_class = $content->type ? 'pane-'. ctools_cleanstring($content->type, array('lower case' => TRUE)) : '';
+  $subtype_class = $content->subtype ? 'pane-'. ctools_cleanstring($content->subtype, array('lower case' => TRUE)) : '';
+
+  // Sometimes type and subtype are the same. Avoid redudant classes.
+  if ($type_class != $subtype_class) {
+    $vars['classes'] .= " $type_class $subtype_class";
+  }
+  else {
+    $vars['classes'] .= " $type_class";
+  }
+
+  // Add id and custom class if sent in.
+  if (!empty($content->content)) {
+    if (!empty($content->css_id)) {
+      $vars['id'] = ' id="' . $content->css_id . '"';
+    }
+    if (!empty($content->css_class)) {
+      $vars['classes'] .= ' ' . $content->css_class;
+    }
+  }
+
+  // administrative links, only if there is permission.
+  $vars['admin_links'] = '';
+  if (user_access('view pane admin links') && !empty($content->admin_links)) {
+    $vars['admin_links'] = theme('links', $content->admin_links);
+  }
+
+  $vars['title'] = !empty($content->title) ? $content->title : '';
+
+  $vars['feeds'] = !empty($content->feeds) ? implode(' ', $content->feeds) : '';
+  $vars['content'] = !empty($content->content) ? $content->content : '';
+
+  $vars['links'] = !empty($content->links) ? theme('links', $content->links) : '';
+  $vars['more'] = '';
+  if (!empty($content->more)) {
+    if (empty($content->more['title'])) {
+      $content->more['title'] = t('more');
+    }
+    $vars['more'] = l($content->more['title'], $content->more['href'], $content->more);
+  }
+}
+
+/*
+ * Implementation of hook_action_info()
+ */ 
+function asce_student_action_info() {
+  $action_info = array(
+    'asce_student_update_percent' => array(
+      'description' => t('Update the application percent complete.'),
+      'type' => 'node',
+      'configurable' => FALSE,
+    ),
+    'asce_student_send_mail_action' => array(
+      'description' => t('Send e-mail via Drupal Mail'),
+      'type' => 'node',
+      'configurable' => TRUE,
+    ),
+    'asce_student_add_to_group' => array(
+      'description' => t('Add the students to the group'),
+      'type' => 'node',
+      'configurable' => FALSE,
+    ),
+    'asce_student_action_add_activity' => array(
+      'description' => t('Add activity'),
+      'type' => 'system',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'nodeapi' => array('view', 'insert', 'update', 'delete'),
+        'user' => array('login'),
+      )
+    )
+  );
+  return $action_info;
+}
+
+/**
+ * Add users to the group 7039
+ */
+function asce_student_add_to_group($object, $context) {
+  $user = user_load($object->uid);
+  og_save_subscription(7039, $user->uid, array('is_active' => 1));
+} 
+
+/**
+ * The basic e-mail form for sending via Drupal Mail
+ */
+function asce_student_send_mail_action_form($context) {
+  $form['subject'] = array(
+    '#title' => t('Subject'),
+    '#type' => 'textfield',
+    '#default_value' => $mail->subject ? $mail->subject : 'Sample',
+    '#size' => 60,        
+  );
+  $form['body'] = array(
+    '#title' => 'Body',
+    '#type' => 'textarea',
+    '#default_value' => $mail->body ? $mail->body : 'Sample', 
+    '#rows' => 5,        
+  );
+  return $form;
+}
+
+function asce_student_send_mail_action_submit($form, &$form_state) {
+  $message['message']['subject'] = $form_state['values']['subject'];
+  $message['message']['body'] = $form_state['values']['body'];
+  return($message);
+} 
+
+function asce_student_send_mail_action($object, $context) {
+  global $_domain;
+  $user = user_load($object->uid);
+  $site_mail = domain_conf_variable_get($_domain['domain_id'], 'site_mail');
+  $params['message'] = $context['message'];
+  $language = user_preferred_language($object);
+  
+  $final_mail = drupal_mail('asce_student', 'vbo', $user->mail, $language, $params, $site_mail);
+  drupal_set_message(kpr($final_mail,TRUE));
+}
+
+function asce_student_mail($key, &$message) {
+  if ($key == 'vbo') {
+    $message['body'] = $message['params']['message']['body'];
+    $message['subject'] = $message['params']['message']['subject'];
+  }
+  if ($key == 'notify') {
+  	//$message['body'] = check_markup('The team captains have been identified. Visit http://ci-asce.org/student-days to learn how to sign up for the teams.'); 
+  	$message['body'] = 'You only have one day left to select the two teams you wish to be ';
+  	$message['body'] .= 'considered for. Remember, you can only be considered for two ';
+  	$message['body'] .= 'teams at a time. The system will remove you from the teams if you ';
+  	$message['body'] .= 'go over and you will lose your chance for consideration. I urge you to send ';
+  	$message['body'] .= 'messages to the Captains. There is a link on the Team Page to send them messages. So head over to ';
+  	$message['body'] .= 'http://ci-asce.org/student-days now and verify you have your teams selected. I have added a box on ';
+  	$message['body'] .= 'page so you can easily see which teams you have selected. If you see more than two teams, be sure to ';
+  	$message['body'] .= 'remove some.';
+  	$message['body'] = check_markup($message['body']);
+  	$message['subject'] = check_markup('Check your team selections');
+  }
+  if ($key == 'no-template') {
+  	//dsm($message);
+  	$mail = $message['params'];
+  	$message['subject'] = $mail['subject'];
+  	$message['body'] = $mail['body'];
+  }
+}
+
+/**
+ * Implementation of a configurable Drupal action. Sends an email.
+ */
+function asce_student_update_percent($object, $context) {
+	// Check to see if it exists in the asce_student table
+	$sql = "SELECT * FROM {asce_student} WHERE uid = %d";
+	$results = db_query($sql, $object->uid);
+	$exists = mysql_num_rows($results);
+	$user = user_load($object->uid);
+	$info = _asce_student_percent_complete($user);	
+	if (!$exists) {
+		$row = array('uid' => $object->uid, 'nid' => $object->nid, 'percent_complete' => $info['percent']);
+		drupal_write_record('asce_student', $row);
+		drupal_set_message('Created...  ' . $info['percent']);
+	}
+	else {
+		$row = array('uid' => $object->uid, 'nid' => $object->nid, 'percent_complete' => $info['percent']);
+    drupal_write_record('asce_student', $row, 'uid');
+    drupal_set_message('Updated...  ' . $info['percent']);
+	}
+
+}
+
+/**
+ * Conditionally create and send a notification email when a certain
+ * operation happens on the given user account.
+ *
+ * @see user_mail_tokens()
+ * @see drupal_mail()
+ *
+ * @param $op
+ *  The operation being performed on the account.  Possible values:
+ *  'nominated': The first e-mail sent to a student regarding student days
+ *  'solicit captains': Message seeking potential team captains
+ *  'solicit officers': Message seeking potential team officers
+ *  'solicit members': Message seeking potential team members
+ *
+ * @param $account
+ *  The user object of the account being notified.  Must contain at
+ *  least the fields 'uid', 'name', and 'mail'.
+ * @param $language
+ *  Optional language to use for the notification, overriding account language.
+ * @return
+ *  The return value from drupal_mail_send(), if ends up being called.
+ */
+function _asce_student_mail_notify($message, $account, $language = NULL) {
+  $params['account'] = $account;
+  $language = $language ? $language : user_preferred_language($account);
+  $mail = drupal_mail('asce_student', $message['mid'], $account->mail, $language, $params);
+  return empty($mail) ? NULL : $mail['result'];
+}
+
+/**
+ * Implementation of hook_mail().
+ */
+function asce_student_mail_old($mid, &$message, $params) {
+  $language = $message['language'];
+  $variables = user_mail_tokens($params['account'], $language);
+  $variables = array_merge($variables, asce_student_mail_tokens($params['account'], $language));
+  $message['subject'] .= _asce_student_mail_text('subject', $mid, $language, $variables);
+  $message['body'][] = _asce_student_mail_text('body', $mid, $language, $variables);
+}
+
+/**
+ * Return an array of token to value mappings for user e-mail messages.
+ *
+ * @param $account
+ *  The user object of the account being notified.  Must contain at
+ *  least the fields 'uid', 'name', and 'mail'.
+ * @param $language
+ *  Language object to generate the tokens with.
+ * @return
+ *  Array of mappings from token names to values (for use with strtr()).
+ */
+function asce_student_mail_tokens($account, $language) {
+  global $base_url;
+  $tokens = array(
+    '!first_name' => $account->profile_first_name,
+    '!last_name' => $account->profile_last_name,
+    '!professor_last' => $account->profile_professor_last_name,
+    '!professor_first' => $account->profile_professor_first_name,
+    '!first_login' => asce_student_pass_reset_url($account),
+    '!days_left' => _asce_student_get_days_left('2011-04-18'),
+  );
+  return $tokens;
+}
+
+function _asce_student_get_days_left($date) {
+	$deadline = new DateTime($date);
+	$now = date_make_date('now');
+	$diff = date_difference($deadline, $now, 'days');
+  return $diff > 1 ? $diff . ' days' : $diff . ' day';
+}
+
+/**
+ * Returns a mail string for a variable name.
+ *
+ * Used by asce_student_mail() and the settings forms to retrieve strings.
+ */
+function _asce_student_mail_text($key, $mid, $language = NULL, $variables = array()) {
+  $langcode = isset($language) ? $language->language : NULL;
+  if ($admin_setting = variable_get('user_mail_'. $key, FALSE)) {
+    // An admin setting overrides the default string.
+    return strtr($admin_setting, $variables);
+  }
+  else {
+    // No override, return default string.
+    switch ($key) {
+      case 'subject':
+        $text = db_result(db_query("SELECT subject FROM {asce_student_mail} WHERE mid = %d", $mid));
+        return t($text, $variables, $langcode);
+      case 'body':
+    	  $text = db_result(db_query("SELECT body FROM {asce_student_mail} WHERE mid = %d", $mid));
+    	  return t($text, $variables, $langcode);
+    }
+  }
+}
+
+/**
+ * Generates a unique URL for a user to login and reset their password.
+ *
+ * @param object $account
+ *   An object containing the user account.
+ *
+ * @return
+ *   A unique URL that provides a one-time log in for the user, from which
+ *   they can change their password.
+ */
+function asce_student_pass_reset_url($account) {
+  $timestamp = time();
+  return url("student-days/reset/$account->uid/$timestamp/". user_pass_rehash($account->pass, $timestamp, $account->login), array('absolute' => TRUE));
+}
+
+// Helper function to provide info on status of a student's application
+function _asce_student_percent_complete($account) {
+  $app = asce_student_application_status($account);
+  $status = $app['status'];
+  $node = $app['data'];
+  
+  $total = 0;
+  $required_fields = array(
+          'field_gender' => 'your gender in <em>General</em>',
+          'field_graduation' => 'your expected graduation date in <em>General</em>',
+          'field_chapter' => 'whether you are a member of an ASCE Student Chapter in <em>ASCE Student Chapter</em>',
+          'field_degree'=> 'what your degree will be in <em>General</em>',
+          'field_school_writein' => 'name of your school <em>General</em>',
+          'field_major_writein'=> 'your major in <em>General</em>',
+          'field_expected_outcome' => 'why you want to come in <em>Statement of Interest</em>',
+          'field_mean_to_you' => 'what Civil Engineering means to in <em>Statement of Interest</em>',
+          'field_area' => 'what area you want to be in <em>Statement of Interest</em>',
+          'field_resume' => 'a resume in <em>Resume</em>',
+          'field_gpa' => 'your GPA in <em>Education and Experience</em>',
+          //'field_course_list' => 'a list of courses you have taken and are taking <em>Education and Experience</em>',
+          'field_total_funding_request' => 'an estimate of your travel budget in <em>Travel Information</em>',
+          'field_departure' => 'where you are coming from in <em>Travel Information</em>',
+          'field_travel_cost' => 'details of your travel costs in <em>Travel Information</em>',
+  );
+  $optional_fields = array(
+          'field_chapter_officer',
+          'field_conference_committee_work',
+          'field_current_employer',
+          'field_internship',
+  );
+  $total_complete = 0;
+  foreach($required_fields as $key => $text) {
+    $tmp = $node->$key;
+    $value = $tmp[0]['value'];
+    if ($key == 'field_resume') {
+      $value = $tmp[0]['filename'];
+    }
+    //drupal_set_message($key . '=' . $value);
+    if (!empty($value)) {
+      $total_complete = $total_complete + 1;
+    }
+    else {
+      $still_need[] = $text;
+    }
+  }
+  $info['percent'] = round($total_complete/count($required_fields)*100, 0);
+  $info['still_need'] = $still_need;
+  $info['status'] = $status;
+  $info['data'] = $node;
+  return $info;
+}
+
+/**
+ * Implementation of hook_node_grants().
+ *
+ * Tell the node access system what GIDs the user belongs to for each realm.
+ * We are providing two realms: the asce_student_view_only, which
+ * has just one group id (1) and the user is either a member or not depending
+ * upon the their permission set.
+ *
+ * We are also setting up a realm for the node author, though, to give it
+ * special privileges. That has 1 GID for every UID, and each user is
+ * automatically a member of the group where GID == UID.
+ *
+ */
+function asce_student_node_grants($account, $op) {
+  if ($op == 'view' && user_access('is a leader', $account)) {
+    $grants['asce_student_view_only'] = array(1);
+  }
+
+  $grants['asce_student_author'] = array($account->uid);
+  return $grants;
+}
+
+function asce_student_node_access_records($node) {
+  // We only care about the node if it's of type ci_student_days_seattle. If not, it is
+  // treated just like any other node and we completely ignore it.
+  if ($node->type == 'ci_student_days_seattle') {
+    $grants = array();
+    $grants[] = array(
+      'realm' => 'asce_student_view_only',
+      'gid' => TRUE,
+      'grant_view' => TRUE,
+      'grant_update' => FALSE,
+      'grant_delete' => FALSE,
+      'priority' => 0,
+    );
+    $grants[] = array(
+      'realm' => 'asce_student_author',
+      'gid' => $node->uid,
+      'grant_view' => TRUE,
+      'grant_update' => TRUE,
+      'grant_delete' => TRUE,
+      'priority' => 0,
+    );    
+    return $grants;
+  }
+}
+
+function asce_student_preprocess_page(&$variables) {	
+	if (arg(0) == 'student-days' && arg(1) == 'staff') {
+		$breadcrumb = drupal_get_breadcrumb();
+		$breadcrumb[] = l('Student Days', 'student-days');
+		drupal_set_breadcrumb($breadcrumb);
+    $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
+	}
+}
+
+function asce_student_action_add_activity($object, $context) {
+	//drupal_set_message('$object', kpr($object, TRUE));
+	//drupal_set_message('$context', kpr($context, TRUE));
+	$account = $context['account'];
+	$hook = $context['hook'];
+	$op = $context['op'];
+	$activity = $hook . '-' . $op;
+	$row->uid = $account->uid;
+  $row->timestamp = time();
+  $row->action = $row->category = $activity;
+	switch ($activity) {
+		case 'user-login':
+			// Check to see if student
+			$sql = "SELECT rid from {users_roles} WHERE uid = %d";
+			$results = db_query($sql, $account->uid);
+			while ($rid = db_result($results)) {
+				$rids[$rid] = $rid;
+			}
+			if(in_array(10, $rids)) {
+				$row->activity = $account->profile_first_name . ' ' . $account->profile_last_name . ' logged in on ' . date('M j, Y g:ia T', $row->timestamp) . '.';
+				drupal_write_record('asce_student_activity', $row);
+			}
+			break;
+		case 'nodeapi-view':
+			$row->activity = $account->profile_first_name . ' ' . $account->profile_last_name . ' viewed something on ' . date('M j, Y g:ia T', $row->timestamp) . '.';
+      drupal_write_record('asce_student_activity', $row);
+			break;
+	}
+	dsm($row->activity);
+}
+
+function asce_student_cron() {
+	if (time() >= time(0,0,0,5,4) && !variable_get('asce_student_notify_sent', FALSE)) {
+		variable_set('asce_student_notify_sent', TRUE);
+		module_load_include('inc', 'asce_student', 'asce_student.pages');
+	  //asce_student_send_students_message();
+	}
+}
+
+/*
+ *  Helper function, returns the team role in the form of a string
+ */
+function asce_student_get_team_role($uid) {
+	$sql = "SELECT team_role FROM {asce_student_og_uid} WHERE uid = %d;";
+	$team_role = db_result(db_query($sql, $uid));
+	if ($team_role) {
+		switch($team_role) {
+			case 1:
+				return 'Captain';
+			case 2:
+				return 'Officer';
+			case 3:
+				return 'Member';
+		}
+	}
+}
+
+function asce_student_is_candidate($team_id) {
+	global $user;
+	$sql = "SELECT uid FROM {asce_student_teams} WHERE uid = %d AND team_id = %d;";
+  $is_candidate = db_result(db_query($sql, $user->uid, $team_id));
+  if ($is_candidate) {
+  	return TRUE;
+  }
+}
+
+function asce_student_get_team_members($team_id) {
+	$sql = "SELECT og.uid, asce.team_role FROM og_uid og 
+	          LEFT JOIN asce_student_og_uid asce 
+	          ON og.uid = asce.uid WHERE og.nid = %d 
+	          ORDER BY asce.team_role ASC";
+	$results = db_query($sql, $team_id);
+	$members = array();
+	while ($row = db_fetch_object($results)) {
+		$account = user_load($row->uid);
+		$attributes = array('query' => '?team_id=' . $team_id, 'html' => TRUE);
+		$picture = theme('image', $account->picture, $account->name, $account->name);
+		$picture = l($picture, 'student-days/bio/view/' . $account->uid, $attributes);
+		$picture = '<div style="float: left; width:100px;">' . $picture . '</div>';
+		$name = $account->profile_first_name . ' ' . $account->profile_last_name;
+		$team_role = asce_student_get_team_role($account->uid);
+		$members[$row->uid] = (array) asce_student_get_student_data($account->uid);
+	}
+  return $members;
+}
+
+/*
+ *  Return an array of CI Student Days Teams
+ */
+function asce_student_get_teams() {
+	$sql = "SELECT nid FROM {node} WHERE type = 'ci_student_team' AND uid != 102 AND uid != 1213";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$teams[$row->nid]['node'] = node_load($row->nid);
+		$teams[$row->nid]['roster'] = asce_student_get_team_members($row->nid);
+		$teams[$row->nid]['captain'] = user_load($teams[$row->nid]['node']->uid); 
+	}
+	return $teams;
+}
+
+function asce_student_get_students() {
+  $sql = "SELECT n.uid, n.nid FROM {node} n 
+    JOIN {users} u ON n.uid = u.uid 
+    WHERE n.type='ci_student_days_seattle'";
+  $results = db_query($sql);
+  while ($row = db_fetch_object($results)) {
+    $students[$row->uid] = (array) asce_student_get_student_data($row->uid);
+  }
+  return $students;
+}
+
+function asce_student_get_student_data($uid) {
+  $sql = "SELECT n.uid, n.nid FROM {node} n 
+    JOIN {users} u ON n.uid = u.uid 
+    WHERE n.type='ci_student_days_seattle' AND n.uid = %d";
+  $row = db_fetch_object(db_query($sql, $uid));
+  // Did the student want to be a captain?
+  $query = 'SELECT captain, selected FROM {asce_student_captain} WHERE uid = %d;';
+  $captain = db_result(db_query($query, $row->uid));
+
+  // Was the student selected to be a captain?
+  // Here I want to do a sanity check, because this information is stored
+  // multiple times and can create inconsistentcies. I first used
+  // asce_student_captain to identify the selected captains using the selected
+  // field, but later when I put the teams together, I also store this in
+  // asce_student_og_uid table under the role field where a role_id of 1
+  // meant the student was a captain
+  $query = 'SELECT uid FROM {asce_student_captain} WHERE uid = %d AND selected = 1;';
+  $is_captain = db_result(db_query($query, $row->uid));
+
+  // Captain sanity check
+  $query = 'SELECT uid FROM {asce_student_og_uid} WHERE uid = %d AND team_role = 1;';
+  $is_captain_sanity = db_result(db_query($query, $row->uid));
+  if ($is_captain && !($is_captain && $is_captain_sanity)) {
+  	if (user_access('administer student days')) {
+  		$tmp = user_load($row->uid);
+  		drupal_set_message('There is an inconsistency in the captains data! ' . $tmp->name . ', ' . $tmp->uid);
+  	}
+  }
+
+  $account = user_load($row->uid);
+  $application = node_load($row->nid);
+  $student = array(
+    'account' => $account,
+    'application' => $application,
+    'wanted_to_be_captain' => (int) $captain,
+    'is_captain' => $is_captain ? TRUE : FALSE,
+  );
+  
+  // Add some additional stuff to help make things easier
+  $attributes = array('query' => drupal_get_destination(), 'html' => TRUE);
+  $name = $account->profile_first_name . ' ' . $account->profile_last_name;
+  if (user_access('write privatemsg')) {
+    if (user_access('administer student days')) {
+      $info = ' {' . $account->name . ', ' . $account->uid . '}';
+    }
+    $picture = theme('image', $account->picture, "Send $name a message" . $info, "Send $name a message" . $info);
+    $picture = l($picture, 'priv-messages/new/' . $account->uid, $attributes);
+  }
+  else {
+    $picture = theme('image', $account->picture, $name, $name);
+    //$picture = l($picture, 'priv-messages/new/' . $account->uid, $attributes);
+  }
+  $picture = '<div style="float: left; width:100px;">' . $picture . '</div>';
+  $team_role = asce_student_get_team_role($account->uid);
+  
+  $additional = array(
+    'full_name' => $name,
+    'picture' => $picture,
+    'role' => $team_role,
+    'school' => $application->field_school_writein[0]['value'],
+    'profile_link' => l($name, 'student-days/bio/view/' . $row->uid), 
+  );
+  $student = array_merge($student, $additional);
+  return (object) $student;	
+}
+
+function asce_student_get_student_data_backup($uid) {
+	$sql = "SELECT n.nid, n.uid, n.title, u.name, u.mail, u.picture,
+           asce_s.percent_complete, asce_c.selected as is_captain, asce_c.bio 
+           FROM node n LEFT JOIN users u ON n.uid = u.uid 
+           LEFT JOIN asce_student asce_s ON u.uid = asce_s.uid 
+           LEFT JOIN asce_student_captain asce_c ON u.uid = asce_c.uid 
+           WHERE n.type = 'ci_student_days_seattle' AND u.uid = %d";
+	$results = db_query($sql, $uid);
+	$student = db_fetch_object($results);
+	$account = user_load($student->uid);
+	$attributes = array('query' => drupal_get_destination(), 'html' => TRUE);
+	$name = $account->profile_first_name . ' ' . $account->profile_last_name;
+	if (user_access('write privatemsg')) {
+		if (user_access('administer student days')) {
+			$info = ' {' . $account->name . ', ' . $account->uid . '}';
+		}
+	  $picture = theme('image', $account->picture, "Send $name a message" . $info, "Send $name a message" . $info);
+	  $picture = l($picture, 'priv-messages/new/' . $account->uid, $attributes);
+	}
+	else {
+		$picture = theme('image', $account->picture, $name, $name);
+    //$picture = l($picture, 'priv-messages/new/' . $account->uid, $attributes);
+	}
+	$picture = '<div style="float: left; width:100px;">' . $picture . '</div>';
+	$team_role = asce_student_get_team_role($account->uid);
+	$application = node_load($student->nid);
+	
+	$student->full_name = $name;
+	$student->picture = $picture;
+	$student->role = $team_role;
+	$student->school = $application->field_school_writein[0]['value'];
+	$attributes = array(
+	  'query' => array(
+	    'destination' => $_GET['q'],
+	    'team_id' => arg(1),
+	  )
+	);
+	$student->link = l($name, 'student-days/bio/view/' . $student->uid, array('query' => drupal_get_destination()));
+	$student->user_object = $account;
+	$student->application = $application;
+	
+	return (object) $student;
+}
+
+/**
+ * Return votes html.
+ */
+function asce_student_advpoll_votes($node) {
+
+  //drupal_set_title(check_plain($node->title));
+
+  if ($node->show_votes || user_access('administer polls')) {
+    $output = t('This table lists all the recorded votes for this poll. If anonymous users are allowed to vote, they will be identified by the IP address of the computer they used when they voted.');
+
+    $header[] = array('data' => t('Visitor'), 'field' => 'u.name');
+    $header[] = array('data' => t('Date'), 'field' => 'v.timestamp');
+    $header[] = array('data' => t('Vote'), '');
+
+    // added pager query because of pre-grouping as an intermediate fix.
+    $result = pager_query("
+      SELECT v.uid, v.vote_source, v.timestamp, u.name
+      FROM {votingapi_vote} v
+      LEFT JOIN {users} u
+        ON v.uid = u.uid
+      WHERE v.content_type = 'advpoll'
+        AND v.content_id = %d
+      GROUP BY v.uid, v.vote_source, v.timestamp, u.name"
+      .tablesort_sql($header),
+      20, 0, "
+      SELECT COUNT( DISTINCT v.uid, v.vote_source, v.timestamp, u.name )
+      FROM {votingapi_vote} v
+      LEFT JOIN {users} u
+        ON v.uid = u.uid
+      WHERE v.content_type = 'advpoll'
+        AND v.content_id =%d",
+      $node->nid
+    );
+
+    $uids = array();
+    $hostnames = array();
+    $timestamp = array();
+    while ($vote = db_fetch_object($result)) {
+      $uids[$vote->uid] = $vote->uid;
+      $hostnames[$vote->vote_source] = $vote->vote_source;
+      $timestamps[$vote->timestamp] = $vote->timestamp;
+    }
+
+    $rows = array();
+    if (count($uids) > 0) {
+      // Use db_query()'s placeholder syntax to prevent any potential SQL
+      // injection attacks.
+      $uid_placeholders = array_fill(0, count($uids), '%d');
+      $host_placeholders = array_fill(0, count($hostnames), "'%s'");
+      $time_placeholders = array_fill(0, count($timestamps), '%d');
+
+      // Here we have to select votes based on their uid+hostname+timestamp
+      // combination because there no unique id for the set of rankings that
+      // corresponds to a user's full vote on a given poll.
+      $query = "
+        SELECT v.vote_id, v.tag, v.uid, v.vote_source, v.timestamp, v.value, u.name
+        FROM {votingapi_vote} v
+        LEFT JOIN {users} u
+          ON v.uid = u.uid
+        WHERE v.content_id = %d
+          AND v.uid IN(". implode(', ', $uid_placeholders) .")
+          AND v.vote_source IN(". implode(', ', $host_placeholders) .")
+          AND v.timestamp IN(". implode(', ', $time_placeholders) .")"
+        . tablesort_sql($header);
+      $parameters = array_merge(array($query, $node->nid), array_values($uids), array_values($hostnames), array_values($timestamps));
+      $result = call_user_func_array('db_query', $parameters);
+      while ($vote = db_fetch_object($result)) {
+        $key = $vote->uid ? $vote->uid : $vote->vote_source .'-'. $vote->timestamp;
+        $rows[$key]['name'] = $vote->name ? theme('username', $vote) : check_plain($vote->vote_source);
+        $rows[$key]['timestamp'] = $vote->timestamp;
+        if ($node->type == 'advpoll_ranking') {
+          // Need two dimensional results (if equal rankings are allowed).
+          $rows[$key]['votes'][$vote->value][] = _advpoll_choice_markup($node->choice[$vote->tag]['label'], $node->format, FALSE);
+        }
+        else {
+          // Just need one dimensional results.
+          $rows[$key]['votes'][] = _advpoll_choice_markup($node->choice[$vote->tag]['label'], $node->format, FALSE);
+        }
+      }
+    }
+    
+    $separators = array('advpoll_ranking' => ' > ', 'advpoll_binary' => ', ');
+
+    // Create strings out of each vote.
+    $results = array();
+
+    foreach ($rows as $key => $container) {
+      $ranking = $container['votes'];
+      asort($ranking);
+      $rankings = array();
+      if ($node->type == 'advpoll_ranking') {
+        // Include support for multiple choices having the same ranking.
+        foreach ($ranking as $vote => $choices) {
+          $rankings[$vote] = implode(' = ', $choices);
+        }
+      }
+      else {
+        // Just copy the previous array.
+        $rankings = $ranking;
+      }
+      ksort($rankings);
+      $results[$key]['name'] = $rows[$key]['name'];
+      $results[$key]['timestamp'] = format_date($rows[$key]['timestamp'], 'small');
+      $results[$key]['vote'] = implode($separators[$node->type], $rankings);
+    }
+
+    $output .= theme('table', $header, $results);
+    $output .= theme('pager', NULL, 20, 0);
+  }
+  else {
+    $output = '<div class="advpoll-cant-show-votes">'. t('This poll is configured to not display individual votes.') . '</div>';
+  }
+
+  // Only display the button if the user has access.
+  if (_advpoll_clear_votes_access($node)) {
+    $output .= drupal_get_form('advpoll_clear_votes_form', $node->nid);
+  }
+  return $output;  
+}
+
+function asce_student_access($op = 'captain-officer') {
+  global $user;
+  if (user_access('administer student days')) {
+  	return TRUE;
+  }
+  switch($op) {
+  	case 'captain-officer':
+  		$student = asce_student_get_student_data($user->uid);
+  		//drupal_set_message($student->role);
+  		if (in_array($student->role, array('Captain', 'Officer')) || user_access('administer student days')) {
+  			return TRUE;
+  		}
+  	case 'all-students':
+      $student = asce_student_get_student_data($user->uid);
+      //drupal_set_message($student->role);
+      if (in_array($student->role, array('Captain', 'Officer')) || user_access('administer student days')) {
+        $access = TRUE;
+      }
+      if ($access && asce_student_is_candidate(arg(1))) {
+      	return TRUE;
+      }  		
+  }
+}
+
+/**
+ * Menu callback; Generate a listing of promoted nodes.
+ */
+function asce_student_team_page_posts() {
+	$sql = "SELECT n.nid, n.sticky, n.created, n.uid 
+     FROM {node} n
+     JOIN {og_ancestry} og ON n.nid = og.nid   
+     WHERE n.status = 1 AND og.group_nid = %d AND n.type = 'ci_content' ORDER BY n.sticky DESC, n.created DESC";
+  //$result = pager_query(db_rewrite_sql($sql, 'n', 'nid', arg(1)), variable_get('default_nodes_main', 10));
+  $result = db_query($sql, arg(1));
+  $output = '';
+  $num_rows = FALSE;
+  while ($node = db_fetch_object($result)) {
+  	$student = asce_student_get_student_data($node->uid);
+    $node_url = '/node/' . $node->nid;
+    $post = node_load($node->nid);
+    $submitted = format_date($node->created) . ' - ';
+    $submitted .= l($student->full_name, 'priv-messages/new/' . $student->uid, array('query' => drupal_get_destination()));
+    $output .= '<div id="node-' . $node->nid .'">';
+  	$output .= $student->picture;
+  	$output .= '<h2><a href="' . $node_url . '" title="' . $post->title . '">' . $post->title . '</a></h2>';
+  	$output .= '<span class="submitted">' . $submitted . '</span>';
+  	$output .= '<div class="content clear-block">';
+    $output .= check_markup($post->teaser, 2);
+    $output .= '</div>';
+    //$output .= node_view(node_load($node->nid), 1);
+    $num_rows = TRUE;
+  }
+
+  if ($num_rows) {
+    $feed_url = url('rss.xml', array('absolute' => TRUE));
+    drupal_add_feed($feed_url, variable_get('site_name', 'Drupal') .' '. t('RSS'));
+    $output .= theme('pager', NULL, variable_get('default_nodes_main', 10));
+  }
+  else {
+    $default_message = t('<h1 class="title">No posts yet</h1>');
+    $output = '<div id="first-time">'. $default_message .'</div>';
+  }
+  drupal_set_title('');
+
+  return $output;
+}
+
+function theme_asce_student_block_theme($block = array()) {
+	
+>>>>>>> origin/master
 }

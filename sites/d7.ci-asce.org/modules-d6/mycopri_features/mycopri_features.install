@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 // $Id$
 
@@ -13,3 +14,20 @@ function mycopri_features_install() {
 //	return $schema;
 //}
 
+=======
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function mycopri_features_install() {
+  //drupal_install_schema('mycopri_features');
+  db_query("UPDATE {system} SET weight = 100 WHERE name = 'mycopri_features'");
+}
+
+//function mycopri_features_schema() {
+//	return $schema;
+//}
+
+>>>>>>> origin/master

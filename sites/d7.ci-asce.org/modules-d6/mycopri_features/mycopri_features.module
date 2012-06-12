@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 
 function mycopri_features_menu_alter($items) {
@@ -656,4 +657,664 @@ function theme_mycopri_committee_list($account) {
 	}
 	$content .= '</ul></div>';
 	return $content;
+=======
+<?php
+
+function mycopri_features_menu_alter($items) {
+  if (isset($items['og/activity'])) {
+  	$items['og/activity']['title'] = 'Committee activity';
+  }
+  
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function mycopri_features_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'mycopri_features') .'/views',
+  );
+}
+
+function mycopri_features_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+	switch ($op) {
+		case 'view':
+			$group_node = og_get_group_context();
+			if ($group_node && $page && !empty($node->og_groups)) {
+				$bc = drupal_get_breadcrumb();
+				$home = array_shift($bc);
+				$bc[0] = $home;
+				drupal_set_breadcrumb($bc);
+			}
+			break;
+	}
+}
+
+function mycopri_features_theme($existing, $type, $theme, $path) {
+  return array(
+	'activity_list' => array(
+  	  'arguments' => array(
+		'activities' => NULL,
+		'max' => 10,
+   	   ),
+  	),
+	'node_activity' => array(
+  	  'arguments' => array(
+		'activity' => NULL,
+   	   ),
+  	),
+	'comment_activity' => array(
+  	  'arguments' => array(
+		'activity' => NULL,
+   	   ),
+  	),
+	'committee_details_block' => array(
+  	  'arguments' => array(
+		'content' => NULL,
+   	   ),
+  	),
+	'committee_roster' => array(
+  	  'arguments' => array(
+		'members' => NULL,
+   	   ),
+  	),
+	'mycopri_user_block' => array(
+  	  'arguments' => array(
+		'data' => NULL,
+   	   ),
+  	),
+	'mycopri_committee_list' => array(
+  	  'arguments' => array(
+		'user' => NULL,
+   	   ),
+  	),
+	'mycopri_features_dashboard' => array(
+  	  'arguments' => array(
+		'data' => NULL,
+   	   ),
+  	),
+  );
+}
+
+function mycopri_features_block($op = 'list', $delta = 0, $edit = array()) {
+  if ($op == 'list') {
+    $blocks[0]['info'] = t('mycopri_features - Committee Details');
+    $blocks[0]['cache'] = BLOCK_NO_CACHE;
+	$blocks[1]['info'] = t('mycopri_features - Recent Activity');
+    $blocks[1]['cache'] = BLOCK_NO_CACHE;
+	$blocks[2]['info'] = t('mycopri_features - Highlights');
+    $blocks[2]['cache'] = BLOCK_NO_CACHE;
+	$blocks[3]['info'] = t('mycopri_features - Actions');
+    $blocks[3]['cache'] = BLOCK_NO_CACHE;
+	$blocks[4]['info'] = t('mycopri_features - User Block');
+    $blocks[4]['cache'] = BLOCK_NO_CACHE;
+	$blocks[5]['info'] = t('mycopri_features - Dashboard');
+    $blocks[5]['cache'] = BLOCK_NO_CACHE;
+	$blocks[6]['info'] = t('mycopri_features - Events');
+    $blocks[6]['cache'] = BLOCK_NO_CACHE;
+	
+    return $blocks;
+  }
+  elseif ($op == 'view') {
+    switch ($delta) {
+      case 0:
+        return mycopri_features_committee_details();
+      case 1:
+      	return mycopri_features_activity_list('all');
+	  case 2:
+      	return mycopri_features_activity_list('highlights');
+      case 3:
+      	return mycopri_features_activity_list('actions');	  
+      case 4:
+      	return mycopri_features_user_block();	  
+      case 5:
+      	return mycopri_features_dashboard();
+      case 6:
+      	return mycopri_features_activity_list('events');
+    }
+  }
+  elseif ($op == 'configure') {
+    switch ($delta) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+    }
+  }
+  elseif ($op == 'save') {
+    switch ($delta) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+    }
+  }
+}
+
+/**
+ * Display a block with a list of activities
+ */
+function mycopri_features_activity_list($filter) {
+	if (arg(0) == 'node' && is_numeric(arg(1))) {
+		$url_node = node_load(arg(1));
+		$is_group_node = og_is_group_type($url_node->type);
+	}
+	
+	// Set up the WHERE clauses
+	if ($is_group_node) {
+		$node_where = ' JOIN og_ancestry oga ON n.nid = oga.nid WHERE group_nid = ' . arg(1) . ' ';
+		$comment_where = ' JOIN og_ancestry oga ON c.nid = oga.nid WHERE group_nid = ' . arg(1) . ' ';
+	}
+	
+	$sql = "SELECT n.nid FROM node n JOIN node_revisions ON n.vid = node_revisions.vid " . $node_where .
+				" ORDER BY timestamp DESC LIMIT 50";
+	$results = db_query(db_rewrite_sql($sql));
+	while($nid = db_result($results)) {
+		$node = node_load($nid);
+		$activity = _mycopri_features_node_activity($node);
+		$show_activity = _mycopri_features_show_activity($node, $filter);
+		if ($show_activity) {
+			$activities[]= array(
+				'text' => theme('node_activity', $activity),
+				'timestamp' => (int) $activity['timestamp'],
+				'format' => date_format_interval(date_make_date($activity['timestamp'], NULL, DATE_UNIX), 3),
+				'author' => user_load($activity['uid']),
+			);
+		}
+	}
+	$sql = "SELECT * FROM comments c " . $comment_where . " ORDER BY timestamp DESC LIMIT 50";
+	$results = db_query(db_rewrite_sql($sql, 'c', 'nid'));
+	while($comment = db_fetch_object($results)) {
+		$activity = _mycopri_features_comment_activity($comment);
+		$node = node_load($comment->nid);
+		$show_activity = _mycopri_features_show_activity($node, $filter);
+		if ($show_activity) {
+			$activities[]= array(
+				'text' => theme('comment_activity', $activity),
+				'timestamp' => (int) $activity['timestamp'],
+				'format' => date_format_interval(date_make_date($activity['timestamp'], NULL, DATE_UNIX), 3),
+				'author' => user_load($activity['uid']),
+			);
+		}
+	}
+	if ($activities) {
+	  uasort($activities, '_mycopri_features_sort_activities');	
+		switch ($filter) {
+			case 'all':
+				$block['subject'] = 'Recent Activity';
+				break;
+			case 'events':
+				$block['subject'] = 'Events';
+				break;
+			case 'highlights':
+				$block['subject'] = 'Discussions';
+				break;
+			case 'actions':
+				$block['subject'] = 'Actions';
+				break;
+		}
+		$block['content'] = theme('activity_list', $activities, 10);
+	}
+	return $block;
+}
+
+/**
+ * Display details about the committee using the data in the group node
+ */
+function mycopri_features_committee_details() {
+	// Check to see if the page that this block is being displayed on
+	// is a node that is a group node
+	if (arg(0) == 'node' && is_numeric(arg(1))) {
+		$url_node = node_load(arg(1));
+		$is_group_node = og_is_group_type($url_node->type);
+	}
+	else {
+		return;
+	}
+	
+	$node = node_load(arg(1));
+	$title = $node->title;
+	$content['body'] = $node->body;
+	$content['teaser'] = $node->teaser;
+	$content['roster'] = _mycopri_features_get_committee_roster($node);
+	
+	$block['subject'] = $title;
+	$block['content'] = theme('committee_details_block', $content);
+	return $block;
+}
+/**
+ * Callback function to display a custom user block *
+ * @param 
+ * @param 
+ * @return
+ *   An HTML string that generates the themed output.
+ */
+function mycopri_features_user_block() {
+	// There are two conditions for this block - 1) when a user 
+	// is logged in; 2) when a user is not logged in.
+	// When a user is logged in the block should show a
+	// summary of the committees they are involved with
+	// If the user is not logged in, then the block should
+	// show the login block.
+	if (user_is_logged_in()) {
+		global $user;
+		
+		$data['account'] = $user;
+	
+		// Determine the number of groups
+		$sql = "SELECT * FROM og_uid WHERE uid = %d";
+		$results = db_query($sql, $user->uid);
+		while($row = db_fetch_object($results)) {
+			$groups[$row->nid] = $row;
+		}
+		$data['no_groups'] = count($groups);
+	
+		$content .= theme('mycopri_user_block', $data);
+		$content .= '<ul class="mycopri-features-committee-list">';
+		$content .= '<li>You have ? new messages.</li>';
+		$content .= '<li>You have ? actions due this week</li>';
+		$content .= '<li>You have ? meetings scheduled</li>';
+		$content .= '</ul>'	;
+		$content .= theme('mycopri_committee_list', $user);
+		$block['subject'] = '';
+		$block['content'] = $content;
+		return $block;
+	}
+	else {
+		$block['subject'] = t('User login');
+        $block['content'] = drupal_get_form('user_login_block');
+		return $block;
+	}
+}
+
+function mycopri_features_dashboard() {
+	$actions = _mycopri_features_dashboard_actions();
+	$content .= '<ul class="mycopri-features-committee-list">';
+	foreach($actions as $action) {
+		$due_date = date_make_date($action[0]->due_date);
+		$is_past = (time() - date_format($due_date, 'U')) > 0 ? TRUE : FALSE;
+		if ($is_past) {
+			$due_text = ' was due ' . date_format_interval($due_date);
+		}
+		else {
+			$due_text = ' due in ' . date_format_interval($due_date);
+		}
+		$content .= '<li class="mycopri-features-activity">' . l($action[0]->node_title, 'node/' . $action[0]->nid) . $due_text;
+		if(isset($action[1])) {
+			$content .= '<ul>';
+			foreach($action[1] as $cid => $comment) {
+			  $comment_author = user_load($comment->comments_uid);
+			  if ($comment_author->picture) {
+			  	$comment_author_photo = file_create_url($comment_author->picture);
+			  }
+			  else {
+			  	$comment_author_photo = file_create_url('../../drupal-private-files/pictures/picture-who.jpg');
+			  }	
+			  $content .= '<li class="mycopri-features-activity">' . 
+			               '<img class="mycopri-features-activity-icon" height="30px" src="' . $comment_author_photo . '" />' .
+			  	l($comment->comments_subject, 'node/' . $comment->node_comments_nid, 
+			  	array('fragment' => 'comment-' . $comment->cid));
+			}
+			$content .= '</ul>';
+		}
+		$content .= '</li>';
+	}
+	$content .= '</ul>';
+	$block['subject'] = 'Special Actions Block';
+	$block['content'] = $content;
+	return $block;
+}
+function _mycopri_features_sort_activities($a, $b) {
+	if ($a['timestamp'] == $b['timestamp']) {
+		return 0;
+	}
+	return $a['timestamp'] > $b['timestamp'] ? -1 : 1;
+}
+
+function _mycopri_features_comment_activity($comment, $action = NULL) {
+	if(is_null($action)) {
+		$action = 'new';
+	}
+	$activity->content_id = $comment->cid;
+	$activity->cid = $comment->cid;
+	$activity->action = $action;
+	$activity->title = $comment->subject;
+	$activity->uid = $comment->uid;
+	$activity->timestamp = $comment->timestamp;
+	$activity->content = 'Comment';
+	return (array) $activity;
+}
+
+function _mycopri_features_node_activity($node) {
+	$activity->content_id = $node->nid;
+	$activity->nid = $node->nid;
+	
+	// Get the content type name
+	$sql_content_type = "SELECT name FROM node_type WHERE type = '%s'";
+	$results_content_type = db_query($sql_content_type, $node->type);
+	if ($type = db_result($results_content_type)) {
+		$activity->content = $type;
+	}
+	else {
+		$activity->content = $node->type;
+	}
+	
+	if ($node->created == $node->changed) {
+		$action = 'new';
+		$activity->uid = $node->uid;
+		$activity->timestamp = $node->created;
+	}
+	else {
+		$action = 'updated';
+		$activity->uid = $node->revision_uid;
+		$activity->timestamp = $node->revision_timestamp;	
+	}
+	$activity->action = $action;
+	$activity->title = $node->title;
+	return (array) $activity;
+}
+
+function _mycopri_features_show_activity($node, $filter) {
+	$show_activity = FALSE;
+	if (isset($node->field_action)) {
+		$is_action = $node->field_action[0]['value'];
+	}
+	switch($filter) {
+		case 'all':
+			$show_activity = TRUE;
+			break;
+		case 'highlights':
+			if (isset($node->field_action)) {
+				if($node->field_action[0]['value'] == 0) {
+					$show_activity = TRUE;
+				}
+			}
+			break;
+		case 'events':
+			if ($node->type == 'event') {
+				$show_activity = TRUE;
+			}
+			break;
+		case 'actions':
+			if (isset($node->field_action)) {
+				if($node->field_action[0]['value'] == 1) {
+					$show_activity = TRUE;
+				}
+			}
+			break;
+	}
+	return $show_activity;
+}
+
+function _mycopri_features_get_committee_roster($node) {
+	$sql = "SELECT og_uid.uid, titles.title, users.name FROM og_uid JOIN users ON users.uid = og_uid.uid LEFT JOIN \n"
+    . "\n"
+    . "(SELECT * FROM og_uid_titles WHERE og_uid_titles.nid = {$node->nid}) titles ON og_uid.uid = titles.uid WHERE og_uid.nid = {$node->nid}";
+	$results = db_query($sql);
+	while($row = db_fetch_object($results)) {
+		$content[] = array(
+			'uid' => $row->uid,
+			'title' => $row->title,
+		);
+	}
+	return $content;
+}
+
+function _mycopri_features_convert_to_private_files() {
+	
+	$sql = "SELECT * FROM files";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$files[] = array(
+			'original' => $row->filepath,
+			'new' => str_replace('sites/default/files/', '../../drupal-private-files/', $row->filepath),
+		);
+		$row->filepath = str_replace('sites/default/files/', '../../drupal-private-files/', $row->filepath);
+		drupal_write_record('files', $row, array('fid'));
+	}
+	dsm($files);
+	$sql = "SELECT * FROM users";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$files2[] = array(
+			'original' => $row->picture,
+			'new' => str_replace('sites/default/files/', '../../drupal-private-files/', $row->picture),
+		);
+		$row->picture = str_replace('sites/default/files/', '../../drupal-private-files/', $row->picture);
+		drupal_write_record('users', $row, array('uid'));
+	}
+	dsm($files2);
+}
+
+function _mycopri_features_views_access($node = NULL) {
+	if(arg(0) == 'node' && is_numeric(arg(1))) {
+		$node = node_load(arg(1));
+		if(og_is_group_type($node->type)) {
+			return TRUE;
+		}
+	}
+}
+
+/**
+ * Helper function that gets the information for action items
+ */
+function _mycopri_features_dashboard_actions() {
+	global $user;
+	$sql = "SELECT node.title AS node_title,
+			node.nid AS nid,
+			history_user.timestamp AS history_user_timestamp,
+			node.created AS node_created,
+			node.changed AS node_changed,
+			node.type AS node_type,
+			og_ancestry.nid AS og_ancestry_nid,
+			users.name AS users_name,
+			users.uid AS users_uid,
+			node_data_field_task_due.field_task_due_value AS due_date,
+			node.vid AS node_vid,
+			node_data_field_completion.field_completion_value AS node_data_field_completion_field_completion_value,
+			node_comment_statistics.comment_count AS node_comment_statistics_comment_count,
+			node.uid AS node_uid,
+			node_revisions.format AS node_revisions_format,
+			node_data_field_logic_action_status.field_logic_action_status_value AS node_data_field_logic_action_status_field_logic_action_statu
+			FROM node node
+			LEFT JOIN content_field_action node_data_field_action ON node.vid = node_data_field_action.vid
+			LEFT JOIN content_field_logic_action_status node_data_field_logic_action_status ON node.vid = node_data_field_logic_action_status.vid
+			LEFT JOIN og_ancestry og_ancestry ON node.nid = og_ancestry.nid
+			LEFT JOIN history history_user ON node.nid = history_user.nid AND history_user.uid = %d
+			INNER JOIN users users ON node.uid = users.uid
+			LEFT JOIN content_field_task_due node_data_field_task_due ON node.vid = node_data_field_task_due.vid
+			LEFT JOIN content_field_completion node_data_field_completion ON node.vid = node_data_field_completion.vid
+			INNER JOIN node_comment_statistics node_comment_statistics ON node.nid = node_comment_statistics.nid
+			LEFT JOIN node_revisions node_revisions ON node.vid = node_revisions.vid
+			WHERE (node.status = 1) AND 
+			(node.type in ('advpoll_binary', 'advpoll_ranking', 'image', 'blog_post', 'event', 'video', 'wiki_post')) AND 
+			(node_data_field_action.field_action_value = 1 ) AND 
+			((node_data_field_logic_action_status.field_logic_action_status_value) != ('Completed')) AND 
+			((node_data_field_logic_action_status.field_logic_action_status_value) != ('Unscheduled'))
+			ORDER BY due_date ASC";
+	$results = db_query(db_rewrite_sql($sql, 'node', 'nid', $user->uid));
+	while ($row = db_fetch_object($results)) {
+		$actions[$row->nid][0] = $row;
+		$sql_comments = "SELECT node_comments.title AS node_comments_title,
+						node_comments.nid AS node_comments_nid,
+						comments.timestamp AS comments_timestamp,
+						comments.subject AS comments_subject,
+						comments.cid AS cid,
+						comments.uid AS comments_uid,
+						comments.nid AS comments_nid,
+						comments.comment AS comments_comment,
+						comments.format AS comments_format
+ 						FROM comments comments 
+ 						LEFT JOIN node node_comments ON comments.nid = node_comments.nid
+ 						WHERE node_comments.status = 1 AND
+ 						node_comments.nid = {$row->nid} 
+   						ORDER BY comments_timestamp DESC";
+   		$results_comments = db_query(db_rewrite_sql($sql_comments, 'comments', 'cid'));
+   		while ($comments = db_fetch_object($results_comments)) {
+   			$actions[$row->nid][1][$comments->cid] = $comments;	
+   		}
+	}
+	return $actions;
+}
+
+function _mycopri_features_unpublish_ci_content() {
+	$sql = "SELECT * FROM node WHERE uid = 102";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$row->status = 1;
+		drupal_write_record('node', $row, array('nid'));
+	}
+	$sql = "SELECT * FROM node WHERE uid = 275";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$row->status = 0;
+		drupal_write_record('node', $row, array('nid'));
+	}	
+}
+
+function theme_activity_list($activities = array(), $max = 10) {
+	global $base_url;
+	drupal_add_css(drupal_get_path('module', 'mycopri_features') . '/css/mycopri_features.css', 'module', 'all');
+	$count = 0;
+	$output .= '<div class="mycopri-features-activity-list"><ul>';
+	foreach($activities as $activity) {
+		if ($activity['author']->picture) {
+			$full_path = file_create_url($activity['author']->picture); 
+		}
+		else {
+			$full_path = file_create_url('../../drupal-private-files/pictures/picture-who.jpg');
+		}
+		$photo = '<img class="mycopri-features-activity-icon" height="30px" src="' . $full_path . '"></img>';
+		
+		$output .= '<li class="mycopri-features-activity">' . $photo . $activity['text'] . ' ' . $activity['format'] . '</li>';
+		$count = $count + 1;
+		if($count == $max - 1) {
+			$output .= '</ul></div>';
+			return $output;
+		}
+	}
+    $output .= '</div>';
+	return $output;
+}
+
+function theme_node_activity($activity) {
+	extract($activity);
+	$node = node_load($content_id);
+	$link = l($node->title, 'node/' . $node->nid);
+	$author = user_load($uid);
+	if ($action == 'new') {
+		$verb = ' posted ';
+	}
+	else {
+		$verb = ' updated ';
+	}
+	return $author->name . $verb . $link;
+}
+
+function theme_comment_activity($activity) {
+	extract($activity);
+	$sql = "SELECT * FROM comments WHERE cid = %d";
+	$results = db_query($sql, $content_id);
+	$comment = db_fetch_object($results);
+	$node = node_load($comment->nid);
+	$author = user_load($comment->uid);
+	$verb = ' commented ';
+	$link = l($comment->subject, 'node/' . $node->nid, array('fragment' => 'comment-' . $comment->cid));
+	return $author->name . $verb . $link;
+}
+
+function theme_committee_details_block($content) {
+	extract($content);
+	//$output .= '<p>' . $body . '</p>';
+	//$output .= '<p>' . $teaser . '</p>';
+	//$roster = theme('committee_roster', $content['roster']);
+	//$output .= count($content['roster']) . ' members<div class="float-clear"></div>';
+	$output .= l(count($content['roster']) . ' members', 'node/' . arg(1) . '/members');
+	return $output;
+}
+
+function theme_committee_roster($members) {
+	global $base_url;
+	$output = '<div class="mycopri-features-roster">';
+	foreach($members as $member) {
+		$output .= '<div class="mycopri-features-member">';
+		$account = user_load($member['uid']);
+		if (!empty($account->picture) && file_exists($account->picture)) {
+      		$picture = file_create_url($account->picture);
+    	}
+    	else if (variable_get('user_picture_default', '')) {
+      		$picture = file_create_url(variable_get('user_picture_default', ''));
+    	}
+		$output .= '<div class="mycopri-features-member-photo">';
+		if (module_exists('privatemsg')) {
+			$url_prefix = variable_get('privatemsg_url_prefix', 'messages');
+			$send_link = '/' . $url_prefix . '/new/' . $account->uid;
+			$output .= '<a title="Send ' . $account->name . ' a message" ' .
+							'href="' . $send_link . '">';
+			$output .= '<img width="35" alt="Send ' . $account->name . ' a message" ' .
+							'src="' . $picture . '"/>';
+			$output .= '</a>';
+		}
+		else {
+			$output .= '<img alt="Send ' . $account->name . ' a message" ' .
+							'src="' . $picture . '"/>';
+		}
+		$output .= '</div>';
+		$output .= "<p>" . l($account->name, $send_link) . ", {$member['title']}</p>" . '<div class="float-clear"></div>';
+		$output .= '</div>';
+	}
+	$output .= '</div>';
+	return $output;	
+}
+
+function theme_mycopri_user_block($data) {
+	extract($data);
+	drupal_add_css(drupal_get_path('module', 'mycopri_features') . '/css/mycopri_features.css', 'module', 'all');
+
+	if ($account->picture) {
+		$full_path = file_create_url($account->picture);
+	}
+	else {
+		$full_path = file_create_url('../../drupal-private-files/pictures/picture-who.jpg');
+	}
+	$output .= '<div class="mycopri-features-user-block">';
+	$output .= '<div class="mycopri-features-user-photo">' . 
+				'<img width="80px" src="' . $full_path . '"/></div>';
+	$output .= '<h2><a title="Display user profile" href="' . 'user/' . $account->uid . '">' . $account->name . '</h2></a>';
+	$output .= '<a title="Display your committees" href="og/my">' . $no_groups . ' committees</a>';
+	$output .= '</div>';
+	
+	return $output;	
+}
+
+/**
+ * Theme function to display a list of a users committees
+ * @param $user
+ * The current user object
+ * @return
+ * An HTML string for display
+ */
+function theme_mycopri_committee_list($account) {
+	$sql = "SELECT node.title AS node_title, node.nid AS nid, users.name AS users_name, " .
+			"users.uid AS users_uid, og_uid.uid AS og_uid_uid, og_uid.nid AS og_uid_nid " .
+			"FROM node node " .
+ 			"LEFT JOIN og_uid og_uid ON node.nid = og_uid.nid " .
+ 			"INNER JOIN users users ON node.uid = users.uid " .
+ 			"WHERE (node.status = 1) AND " . 
+ 			"(node.type IN ('panel','ci_committee','ci_group_node', " .
+ 			"'ci_student_team','test_group_node')) " . 
+ 			"AND (og_uid.uid = %d) " .
+   			"ORDER BY node_title ASC";
+	$results = db_query($sql, $account->uid);
+	
+	$content = '<div class="mycopri-features-committee-list">';
+	$content .= '<h2>Your Committees ' . l('(view all committees)', 'og') . '</h2>';
+	$content .= '<ul>';
+	while($row = db_fetch_object($results)) {
+		$content .= '<li>' . l($row->node_title, 'node/' . $row->nid . '/dev-group-page') . '</li>';
+	}
+	$content .= '</ul></div>';
+	return $content;
+>>>>>>> origin/master
 }

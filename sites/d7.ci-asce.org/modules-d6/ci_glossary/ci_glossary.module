@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 
 /**
@@ -53,6 +54,63 @@ function ci_glossary_menu() {
   );
 	$tmp = 'a b c d e f g h i j k l m n o p q r s t u v w x y z';
 	$letters = explode(' ', $tmp);
+=======
+<?php
+
+/**
+ * @file
+ * Enables the organization of a construction glossary.
+ */
+
+/**
+ * Implementation of hook_perm().
+ */
+function ci_glossary_perm() {
+  return array('administer ci glossary');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function ci_glossary_menu() {
+  $items['admin/content/ci-glossary'] = array(
+    'title' => 'CI Glossary',
+    'description' => 'Manage CI Glossary.',
+    //'page callback' => 'drupal_get_form',
+    'page callback' => 'ci_glossary_overview',
+    'access arguments' => array('administer ci glossary'),
+    'file' => 'ci_glossary.admin.inc',
+  );
+  $items['admin/content/ci-glossary/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/content/ci-glossary/import'] = array(
+    'title' => 'Import',
+    'page callback' => 'ci_glossary_import',
+    'access arguments' => array('administer ci glossary'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'ci_glossary.admin.inc',
+    'weight' => -0,
+  );	
+  $items['admin/content/ci-glossary/import/%'] = array(
+    'title' => 'Import',
+    'page callback' => 'ci_glossary_import_terms',
+    'page arguments' => array(4),
+    'access arguments' => array('administer ci glossary'),
+    'type' => MENU_CALLBACK,
+    'weight' => -0,
+  );
+  $items['ci-glossary'] = array(
+    'title' => 'CI Glossary',
+    'description' => 'CI Glossary.',
+    'page callback' => 'ci_glossary',
+    'access callback' => TRUE,
+  );
+	$tmp = 'a b c d e f g h i j k l m n o p q r s t u v w x y z';
+	$letters = explode(' ', $tmp);
+>>>>>>> origin/master
 	foreach($letters as $letter) {
 		if ($letter == 'a') {
 			$type = MENU_DEFAULT_LOCAL_TASK;
@@ -68,6 +126,7 @@ function ci_glossary_menu() {
 	    'access callback' => TRUE, //'user_is_logged_in',
 	    'type' => $letter == 'a' ? MENU_DEFAULT_LOCAL_TASK : MENU_LOCAL_TASK, 
 	  );
+<<<<<<< HEAD
   }
 	return $items;
 }
@@ -148,3 +207,85 @@ function ci_glossary_theme() {
     ),
   );	
 }
+=======
+  }
+	return $items;
+}
+
+function ci_glossary_init_glossary() {
+	$vid = variable_get('ci_glossary_vocabulary_vid', 0);
+	if($vid) {
+		$tmp = 'a b c d e f g h i j k l m n o p q r s t u v w x y z';
+		$letters = explode(' ', $tmp);
+		foreach ($letters as $letter) {
+			$edit['name'] = strtoupper($letter);
+			$edit[''] = '';
+		}
+	}
+}
+
+function ci_glossary_import_terms($fid) {
+	$o = '';
+	$vid = variable_get('ci_glossary_vocabulary_vid', 0);
+	$sql = "SELECT * FROM files WHERE fid=%d";
+	$file = db_fetch_object(db_query($sql, $fid));
+	$row = 1;
+	if (($handle = fopen($file->filepath, "r")) !== FALSE) {
+    while (($data = fgets($handle)) !== FALSE) {
+    	$data = explode('//', $data);
+    	$datas[] = $data;
+    	if ($row > 1) {
+    		$term['name'] = $data[0];
+				$term['description'] = $data[1];
+				$term['vid'] = $vid;
+				if(!($term_check = _ci_glossary_term_exists($term))) {
+					taxonomy_save_term($term);
+					unset($term);
+				}
+				else {
+					$link_path = 'admin/content/taxonomy/edit/term/' . $term_check->tid;
+					$destination = 'destination=admin/content/taxonomy/' . $vid;
+					$link = l($term_check->name, $link_path, array('query' => $destination));
+					drupal_set_message($link . ' is already defined.');
+				}
+			}
+			$row++;
+    }
+    fclose($handle);
+	}
+	return $o;
+}
+
+function _ci_glossary_term_exists($term) {
+	$sql = "SELECT * FROM {term_data} WHERE name = '%s'";
+	$term_check = db_fetch_object(db_query($sql, $term['name']));
+	if ($term_check->tid) {
+		return $term_check;
+	}
+	return FALSE;
+}
+
+function ci_glossary($letter = 'a') {
+	$vid = variable_get('ci_glossary_vocabulary_vid', 0);
+	$sql = "SELECT * FROM {term_data} WHERE vid = %d";
+	$results = db_query($sql, $vid);
+	while($term = db_fetch_object($results)) {
+		$first_letter = substr($term->name, 0, 1);
+		if($first_letter == strtoupper($letter)) {
+			$terms[] = $term;
+			drupal_add_css(drupal_get_path('module', 'ci_glossary') . '/ci_glossary.css', 'module');
+			$o .= theme('ci_glossary_term', $term);
+		}
+	}
+	return $o;
+}
+
+function ci_glossary_theme() {
+	return array(
+    'ci_glossary_term' => array(
+      'arguments' => array('term' => NULL),
+      'template' => 'ci-glossary-term',
+    ),
+  );	
+}
+>>>>>>> origin/master
