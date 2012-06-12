@@ -1,0 +1,6 @@
+; $Id$
+name = ASCE Pages Enhancements
+description = Adds some new custom features to pages. For now the only feature added is additional tokens that can be used in Pages.
+package = "ASCE"
+dependencies[] = token
+core = 6.x

@@ -1,0 +1,6 @@
+; $Id$
+name = ASCE Home Page
+description = "Provides some custom home pages. Right now just CI specific."
+core = 6.x
+package = ASCE-CI
+

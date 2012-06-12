@@ -1,0 +1,13 @@
+/**
+ * $Id$
+ */
+
+/**
+ * @file
+ * Default stylesheet for the ASCE Video Flowplayer.
+ */
+.asce-flowplayer {
+  display: block;
+  width: 300px;
+  height: 200px;
+}

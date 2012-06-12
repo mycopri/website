@@ -1,0 +1,793 @@
+<?php
+// $Id$
+
+/**
+ * Implements hook_perm().
+ */
+function ci_student_days_perm() {
+  return array(
+    'administer ci student days',
+    'adminsiter ci student days applications',
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function ci_student_days_menu() {
+	// Site configuration menu items
+	$base = array(
+		'access callback'	 => 'ci_student_days_access',
+    'file'             => 'ci_student_days.admin.inc',
+	);
+	
+	// Content management menu items
+	$items['admin/content/ci-student-days'] = array(
+    'title'            => 'CI Student Days',
+    'description'      => 'CI Student Days content',
+    'page callback'    => 'ci_student_days_list',
+    'access arguments' => array('administer ci student days', 'administer ci student days applications'),
+  ) + $base;
+  $items['admin/content/ci-student-days/default'] = array(
+    'title' => 'Student Days',
+    'description' => 'Student Days main page',
+    'page callback' => 'ci_student_days_list',
+    'access arguments' => array('administer ci student days', 'administer ci student days applications'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  ) + $base;
+  $items['admin/content/ci-student-days/add'] = array(
+    'title' => 'Add Student Days',
+    'description' => 'Add a Student Days event to database',
+    'page callback' => 'ci_student_days_add',
+    'access arguments' => array('administer ci student days'),
+		'type' => MENU_LOCAL_TASK,
+    'weight' => -9,
+  ) + $base;
+  $items['admin/content/ci-student-days/edit/%'] = array(
+    'title' => 'Edit Student Day',
+    'description' => 'Edit a Student Days info',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ci_student_days_edit_form', 4),
+    'access arguments' => array('administer ci student days'),
+		'type' => MENU_CALLBACK,
+  ) + $base;
+  $items['admin/content/ci-student-days/%'] = array(
+    'title' => 'Student Day Applications',
+    'description' => 'Administer settings',
+    'page callback' => 'ci_student_days_content',
+    'page arguments' => array(3),
+    'access arguments' => array('administer ci student days'),
+		'type' => MENU_CALLBACK,
+    'weight' => 1,
+  ) + $base;
+	
+	$events = ci_student_days_get_events();
+	foreach($events as $eid => $event) {
+	  $items['admin/content/ci-student-days/' . $eid] = array(
+	    'title' => t($event->description),
+	    'description' => t('Edit specific conference.'),
+	    'page callback' => 'drupal_get_form',
+  	  'page arguments' => array('ci_student_days_edit_form', 3),
+			'access arguments' => array('administer ci student days'),
+	  ) + $base;  
+	  $items['admin/content/ci-student-days/' . $eid . '/edit'] = array(
+	    'title' => t('Edit'),
+	    'description' => t('Edit specific conference.'),
+	    'page callback' => 'drupal_get_form',
+  	  'page arguments' => array('ci_student_days_edit_form', 3),
+    	'access arguments' => array('administer ci student days'),
+    	'type' => MENU_DEFAULT_LOCAL_TASK,
+	    'weight' => 0,
+	  ) + $base;  
+	  $items['admin/content/ci-student-days/' . $eid . '/applications'] = array(
+	    'title' => t('Applications'),
+	    'page callback' => 'ci_student_days_applications',
+	    'page arguments' => array(3),
+	    'access arguments' => array('administer ci student days', 'administer ci student days applications'),
+	    'type' => MENU_LOCAL_TASK,
+	    'weight' => 1,
+	  ) + $base;
+	}
+	return $items;
+}
+
+function ci_student_days_access() {
+	$perms = func_get_args();
+	foreach($perms as $perm) {
+		if(user_access(trim($perm))) {
+			$return = TRUE;
+		}
+	}
+	return $return;
+}
+
+function ci_student_days_form_alter(&$form, &$form_state, $form_id) {
+	if ($form_id == 'ci_student_days_node_form') {
+		global $user;
+		drupal_set_title(t('CI Student Days Application'));
+		$dest = 'destination=' . $_GET['q'];
+		$form['intro_message'] = array(
+			'#prefix' => '<fieldset>',
+			'#value' => 'If you have any questions or problems about the application please send a message to ' .
+									l('Katerina Lachinova', 'priv-messages/new/1462', array('query' => $dest)),
+			'#suffix' => '</fieldset>',
+			'#weight' => '-5,'
+		);
+		$form['buttons']['preview']['#access'] = FALSE;
+		$complete_submit = $form['buttons']['submit']['#submit'];
+		array_unshift($complete_submit, 'ci_student_days_complete_form');
+		$form['buttons']['complete'] = array(
+			'#type' => 'submit',
+			'#value' => 'Submit Application',
+			'#weight' => 6,
+			'#submit' =>  array('ci_student_days_complete'),
+			'#validate' => array('ci_student_days_complete_validate'),
+		);
+		if ($form['nid']['#value']) {
+			$bc = drupal_get_breadcrumb();
+			$bc[1] = l('Application', 'node/' . $form['nid']['#value']);
+			drupal_set_breadcrumb($bc);
+		}
+	  // Picture/avatar:
+	  if (variable_get('user_pictures', 0) && !$register) {
+	    $form['picture'] = array('#type' => 'fieldset', '#title' => t('Picture'), '#weight' => 1);
+	    dpm($user);
+			$edit = (array)$user;
+	    $picture = theme('user_picture', (object)$edit);
+			dpm($picture);
+	    if ($edit['picture']) {
+	    	dpm('Show existing picture');
+	      $form['picture']['current_picture'] = array('#value' => $picture);
+	      $form['picture']['picture_delete'] = array('#type' => 'checkbox', '#title' => t('Delete picture'), '#description' => t('Check this box to delete your current picture.'));
+	    }
+	    else {
+	      $form['picture']['picture_delete'] = array('#type' => 'hidden');
+	    }
+	    $form['picture']['picture_upload'] = array('#type' => 'file', '#title' => t('Upload picture'), '#size' => 48, '#description' => t('Your virtual face or picture. Maximum dimensions are %dimensions and the maximum size is %size kB.', array('%dimensions' => variable_get('user_picture_dimensions', '85x85'), '%size' => variable_get('user_picture_file_size', '30'))) .' '. variable_get('user_picture_guidelines', ''));
+	    $form['#validate'][] = 'user_profile_form_validate';
+	    $form['#validate'][] = 'user_validate_picture';
+	  }
+		dpm($form);
+	}
+	
+	if ($form_id == 'ci_student_days_node_form' && isset($_GET['ci_student_day_eid'])) {
+		global $user;
+		$account = user_load($user->uid);
+		$event = ci_student_days_get_event(variable_get('ci_student_day_current', 1));
+		$form['ci_student_day_eid'] = array(
+			'#type' => 'value',
+			'#value' => $_GET['ci_student_day_eid'],
+		);
+		
+		$title = $account->profile_first_name . ' ' . $account->profile_last_name . 
+			'\'s Application for ' . $event->description . '(eid=' . $event->eid . ')';
+		$form['title']['#disabled'] = TRUE;
+		$form['title']['#access'] = user_access('administer ci student days settings') ? TRUE : FALSE;
+		$form['title']['#default_value'] = $title;
+		$form['title']['#value'] = $title;
+	}
+	if ($form_id == 'user_login' && isset($_GET['from_student_days'])) {
+		//dpm($form);
+	}
+}
+
+/**
+ * Submit function for completing the student application
+ */       
+function ci_student_days_complete($form, &$form_state){
+	module_load_include('inc', 'node', 'node.pages');
+  $node = node_form_submit_build_node($form, $form_state);
+  $insert = empty($node->nid);
+  node_save($node);
+  $node_link = l(t('view'), 'node/'. $node->nid);
+  $watchdog_args = array('@type' => $node->type, '%title' => $node->title);
+  $t_args = array('@type' => node_get_types('name', $node), '%title' => $node->title);
+
+  if ($insert) {
+    watchdog('content', '@type: added %title.', $watchdog_args, WATCHDOG_NOTICE, $node_link);
+    drupal_set_message(t('@type %title has been created.', $t_args));
+  }
+  else {
+    watchdog('content', '@type: updated %title.', $watchdog_args, WATCHDOG_NOTICE, $node_link);
+    drupal_set_message(t('@type %title has been updated.', $t_args));
+  }
+  if ($node->nid) {
+    unset($form_state['rebuild']);
+    $form_state['nid'] = $node->nid;
+    $form_state['redirect'] = 'node/'. $node->nid;
+  }
+  else {
+    // In the unlikely case something went wrong on save, the node will be
+    // rebuilt and node form redisplayed the same way as in preview.
+    drupal_set_message(t('The post could not be saved.'), 'error');
+  }
+  $destination = '';
+  if (isset($_REQUEST['destination'])) {
+    unset($_REQUEST['destination']);
+  }
+  $node = $form['#node'];
+  $form_state['redirect'] = array('ci-student-days/submit/' . $node->nid);
+}
+
+function ci_student_days_submit_confirm(&$form_state, $node) {
+	$mess = 'Submit application? ';
+	$form = confirm_form($form,
+    t($mess),
+    'node/'. $node->nid . '/edit',
+    t('Once submitted, you will not no longer be able to edit the application.'),
+    t('Submit Application'),
+    t('Cancel')
+  );
+	$form['#node'] = node_load($node);
+	return $form;
+}
+
+function ci_student_days_submit_confirm_submit($form, &$form_state) {
+	$app = $form['#node']->ci_student_day_application;
+  if ($form_state['values']['confirm']) {
+    drupal_set_message('The application has been submitted.');
+		$app->submitted = 1;
+		drupal_write_record('ci_student_days_applications', $app, array('nid'));
+  }
+  $form_state['redirect'] = '<front>';	
+}
+		
+function ci_student_days_get_event($eid) {
+	$sql = "SELECT * FROM ci_student_days WHERE eid = %d";
+	$event = db_fetch_object(db_query($sql, $eid));
+	return $event;
+}
+
+/**
+ * Implementation of hook_theme().
+ */	
+function ci_student_days_theme() {
+	return array(
+    'ci_student_days_picture' => array(
+      'arguments' => array('account' => NULL),
+      'template' => 'ci-student-days-picture',
+    ),
+  );  
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function ci_student_days_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+	$current_eid = variable_get('ci_student_day_current', 1);
+	if(arg(0) != 'admin') {
+		if ($op == 'prepare' && is_student_day_application($node)) {
+	    // Check if an application already exists for the current event
+	    if (!isset($node->nid)) {
+		    if ($nid = ci_student_days_application_exists($node, $node->uid, $current_eid)) {
+		      // This node already exists, redirect to edit page only if they have not yet submitted it
+	      	$dest = drupal_get_destination();
+	      	drupal_goto('node/'. $nid .'/edit', $dest);
+		    }
+	  	}
+	  	if ($node->ci_student_day_application->submitted) {
+	  		$mess = 'Since you have already submitted your application you can ' . 
+									'no longer edit the application. To resubmit the application contact ' .
+									'Katerina Lachinova at klachinova@asce.org';
+				drupal_set_message(_filter_url($mess, -1));
+				unset($_REQUEST['destination']);
+				drupal_goto('node/'. $node->nid);
+	  	}
+		}
+	  elseif ($op == 'validate' && is_student_day_application($node) && user_access('administer nodes')) {
+	    $form = $a3;
+	    // Only validate if the user-name changed or we add a new node
+	    if (!empty($node->nid) && $form['author']['name']['#default_value'] == $node->name) {
+	      return;
+	    }
+	    //check whether the selected user has already an application
+	    $uid = db_result(db_query("SELECT uid FROM {users} WHERE name = '%s'", $node->name));
+	    if ($uid && ci_student_days_application_exists($node, $uid, $current_eid)) {
+	      form_set_error('name', t('This user already has a student application. You can only create one student application per user.'));
+	    }
+	  }
+	  elseif ($op == 'prepare translation' && is_student_day_application($node->translation_source)) {
+	    // Make sure the translated profile belongs to the same user.
+	    $node->uid = $node->translation_source->uid;
+	    $node->name = $node->translation_source->name;
+	  }
+		elseif ($op == 'insert' && is_student_day_application($node)) {
+			$app->uid = $node->uid;
+			$app->nid = $node->nid;
+			$app->eid = $node->ci_student_day_eid;
+			$app->created = time();
+			if(drupal_write_record('ci_student_days_applications', $app)) {
+				global $base_url;
+				$account = user_load($node->uid);
+				switch($base_url) {
+					case 'http://lc.ci-asce.org':
+						$send_method = 'privatemsg';
+						$destinations[] = $account;
+						break;
+					case 'http://ci-asce.org':
+						$send_method = 'plain-mail';
+						$destinations[] = $account->mail;
+						break;
+				}
+				$message = ci_student_days_process_message($account, $op, $send_method, $node);
+				if ($node->uid == 102) {
+					if (messaging_message_send($destinations, $message, $send_method)) {
+						$mess = "An email was sent to $account->mail. You should receive it in the next few minutes. If not, please be sure to check your spam.";
+						$mess .= "Be sure to add ci@ci-asce.org to your spam filter; otherwise, you may not receive important emails. ";
+						$mess .= "For any inquiries contact klachinova@asce.org";
+						$mess = t($mess);
+						drupal_set_message($mess);
+					}
+					else {
+						drupal_set_message('Failed!!');
+					}
+				}
+			}
+			else {
+				drupal_set_message('Something went wrong! You will need to submit your application again. For any inquiries contact klachinova@asce.org');
+			}
+		}
+		elseif ($op == 'delete' && is_student_day_application($node)) {
+			db_query("DELETE FROM {ci_student_days_applications} WHERE nid = %d", $node->ci_student_day_application->nid);
+		}
+		elseif ($op == 'load' && is_student_day_application($node)) {
+			$sql = "SELECT * FROM {ci_student_days_applications} WHERE nid = %d";
+			$app = db_fetch_object(db_query($sql, $node->nid));
+			if ($app) {
+				$node->ci_student_day_application = $app;
+			}
+		}
+		elseif ($op == 'view' && is_student_day_application($node)) {
+			if($_GET['from_admin']) {
+				$bc = drupal_get_breadcrumb();
+				$bc[] = l('Back to Application List', $_GET['destination']);
+				drupal_set_breadcrumb($bc);
+			}
+		}
+	}
+}
+
+/**
+ * Determine if a given node is a student day application.
+ * @param $type
+ *   The node object or the node's type
+ */
+function is_student_day_application($type) {
+  if (is_object($type)) {
+    $type = $type->type;
+  }
+	if($type == 'ci_student_days') {
+		return TRUE;
+	}
+}
+
+/**
+ * Checks whether a node of this type exists already for the author
+ *
+ * @param $node
+ *   The node, which is to be created.
+ * @param $uid
+ *   The user to check for.
+ * @return If a node exists, the node id, FALSE else.
+ */
+function ci_student_days_application_exists($node = NULL, $uid, $eid = 1) {
+  //$query = "SELECT n.nid AS nid FROM {node} n WHERE n.type = '%s' AND n.uid = %d ";
+  $sql = "SELECT nid FROM {ci_student_days_applications} WHERE uid = %d AND eid = %d";
+	$nid = db_result(db_query($sql, $uid, $eid));
+  return $nid;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function ci_student_days_block($op = 'list', $delta = 0, $edit = array()) {
+  global $user;
+
+  if ($op == 'list') {
+    $blocks[0]['info'] = t('Student Days');
+    // Not worth caching.
+    $blocks[0]['cache'] = BLOCK_NO_CACHE;
+    $blocks[1]['info'] = t('Student Days - Admin');
+    // Not worth caching.
+    $blocks[1]['cache'] = BLOCK_NO_CACHE;
+
+    return $blocks;
+  }
+  else if ($op == 'configure' && $delta == 0) {
+
+  }
+  else if ($op == 'save' && $delta == 0) {
+
+  }
+  else if ($op == 'view') {
+    $block = array();
+    switch ($delta) {
+      case 0:
+        if (drupal_is_front_page() && user_is_logged_in()) {
+          $block['subject'] = t('Student Days');
+          $block['content'] = ci_student_days_details();
+        }
+        break;
+      case 1:
+	if (drupal_is_front_page() && user_is_logged_in()) {
+          $block['subject'] = t('Student Days - Admin');
+          $block['content'] = ci_student_days_admin();
+        }
+    }
+   	return $block;
+  }
+}
+
+/**
+ * CI Student Days block
+ */
+function ci_student_days_details() {
+	global $user;
+	if(ci_student_days_user_has_application($user->uid)) {
+		$o = '<div style="clear: both">';
+		$o .= 'What\'s happening...';
+		$o .= '</div>';
+		if (user_access('administer ci student days settings')) {
+			$o = '<div style="clear: both">';
+			$o .= 'Admin';
+			$o .= _ci_student_days_admin();
+			$o .= '</div>';			
+		}
+	}	
+	return $o;
+}
+
+function _ci_student_days_admin() {
+	$o = 'Links to reports:';
+	$links[] = l('View created applications', 'admin/settings/ci-student-days/view-apps');
+	$o .= theme('item_list', $links);
+	return $o;
+}
+
+function ci_student_days_user_has_application($uid) {
+	$sql = "SELECT nid FROM ci_student_days_applications WHERE uid = %d";
+	$nid = db_result(db_query($sql, $uid));
+	if ($nid) {
+		return TRUE;
+	}
+}
+
+/**
+ * Process variables for ci-student-days-user.tpl.php.
+ *
+ * The $variables array contains the following arguments:
+ * - $account
+ *
+ * @see ci-student-days-user.tpl.php
+ */
+function template_preprocess_ci_student_days_picture(&$variables) {
+  $variables['picture'] = '';
+  if (variable_get('user_pictures', 0)) {
+    $account = $variables['account'];
+    if (!empty($account->picture) && file_exists($account->picture)) {
+      $picture = file_create_url($account->picture);
+    }
+    else if (variable_get('user_picture_default', '')) {
+      $picture = variable_get('user_picture_default', '');
+    }
+
+    if (isset($picture)) {
+      $alt = t("@user's picture", array('@user' => $account->name ? $account->name : variable_get('anonymous', t('Anonymous'))));
+      $variables['picture'] = theme('image', $picture, $alt, $alt, '', FALSE);
+      if (!empty($account->uid) && user_access('access user profiles')) {
+        $attributes = array('attributes' => array('title' => t('View user profile.')), 'html' => TRUE);
+        $variables['picture'] = l($variables['picture'], "user/$account->uid", $attributes);
+      }
+    }
+  }
+	
+	$variables['first_name'] = t($account->profile_first_name);
+	$variables['last_name'] = t($account->profile_last_name);
+	$variables['email'] = t($account->mail);
+	$variables['full_name'] = t($account->profile_first_name . ' ' . $account->profile_last_name);
+}
+
+/**
+ * Implementation of hook_ci_links().
+ * 
+ * This hook returns an array of links depending on the status
+ * of the user in regards to student days activities. Status could
+ * be 'started application', 'has a message', 'etc.'
+ * 
+ */
+function ci_student_days_ci_links($account = NULL) {
+	if(!$account) {
+		global $user;
+		$account = user_load($user->uid);
+	}
+	$current_eid = variable_get('ci_student_day_current', 1);
+	// Check to see if this user has a student days application in process
+	$sql = "SELECT nid FROM ci_student_days_applications WHERE uid = %d AND eid = %d";
+	$result = db_result(db_query($sql, $account->uid, $current_eid));
+	$student_days_app_exists = FALSE;
+	if ($result) {
+		$student_days_app_exists = TRUE;
+	}
+	if ($student_days_app_exists) {
+		$links[] = l('Edit your Student Days Application', 'node/' . $result . '/edit', array('query' => drupal_get_destination())); 
+	}
+	else {
+		//$links[] = l('Apply for Student Days', 'node/add/ci-student-days', array('query' => array('ci_student_day_eid' => $current_eid)));
+		$links[] = t('We are no longer accepting applications for the student days.');
+	}
+	return $links;
+}
+
+/**
+ * Implementation of hook_messaging()
+ * 
+ * This hook provides information about the message templates this module uses and related tokens.
+ * 
+ * Depending on $op, this hook takes different parameters and returns different pieces of information:
+ * 
+ * - 'message groups'
+ *   Get array of message groups, each of which will have one or more keys for different templates
+ *   Each group should have a unique key, so it should start with the module name
+ * - 'message keys'
+ *   Get message template parts for a given group ($arg1)
+ *   Return array of key => name for each part
+ * - 'messages'
+ *   Get default message templates for a given group ($arg1).
+ *   It should return default texts, indexed by message key that will be the default templates
+ *   These templates may be edited on the 'Messaging templates' page
+ * - 'tokens'
+ *   Get available tokens for a given message group and key ($arg1).
+ *   Return array of token keys that will be available for this message templates
+ *   The tokens themselves may be default tokens (provided by token module) or we can add new
+ *   tokens implementing hook_token_list() and hook_token_value()
+ * 
+ * @param $op
+ *   Operation, type of information to retrieve
+ * @param $arg1, $arg2...
+ *   Different parameters depending on $op
+ */
+function ci_student_days_messaging($op, $arg1 = NULL, $arg2 = NULL, $arg3 = NULL, $arg4 = NULL) {
+  switch ($op) {
+    case 'message types':
+      $info['ci-student-days'] = array(
+        'name' => t('CI Student Days'),
+        'description' => t('Messages from CI Student Days events')
+      );
+      return $info;
+    case 'message groups':
+      $help = t('The <em>Header</em> and <em>Footer</em> will be taken from CI Student Days events.');
+      // Generic notifications event
+      $info['ci-student-days-event'] = array(
+        'module' => 'cms',
+        'name' => t('Student Days Application event'),
+        'description' => t('Common parts for all messages for a single student days event. This is useful for defining a common header and/or footer for all these messages.'),
+      );
+      $info['ci-student-days-event-application'] = array(
+        'module' => 'cms',
+        'name' => t('Notifications for application events'),
+        'description' => t('Defaults for all notifications related to application events.'),
+        'help' => $help,
+        'fallback' => 'ci-student-days-event',
+      );
+      $info['ci-student-days-event-application-insert'] = array(
+        'module' => 'cms',
+        'name' => t('Notifications for application creation'),
+        'description' => t('Notifications produced when a new application is submitted.'),
+        'help' => $help,
+        'fallback' => 'ci-student-days-event-application',
+      );
+      $info['ci-student-days-event-application-update'] = array(
+        'module' => 'cms',
+        'name' => t('Notifications for application updates'),
+        'description' => t('Notifications produced when an application is updated.'),
+        'help' => $help,
+        'fallback' => 'ci-student-days-event-application',
+      );
+      $info['ci-student-days-event-application-comment'] = array(
+        'module' => 'cms',
+        'name' => t('Notifications for application comments'),
+        'description' => t('Notifications produced when a comment is posted to an application.'),
+        'help' => $help,
+        'fallback' => 'ci-student-days-event-application',
+      );
+			return $info;
+    case 'message keys':      
+      $type = $arg1;
+      switch ($type) {
+        case 'ci-student-days-event':				
+          // Event notifications
+          return array(
+            'subject' => t('Subject'),
+            'header' => t('Header'),
+            'main' => t('Content'),
+            'footer' => t('Footer'),
+          );
+        case 'ci-student-days-event-application':
+        case 'ci-student-days-event-application-insert':
+        case 'ci-student-days-event-application-update':              
+        case 'ci-student-days-event-application-comment':
+          // Some parts will be re-used from 'cms-event' group
+          // So we specify only subject and main message
+          return array(
+            'subject' => t('Subject'),
+            'main' => t('Content'),
+          );
+      }
+      break;
+    case 'messages':
+      $type = $arg1;
+      // CMS messages
+      switch ($type) {
+      	case 'ci-student-days-event':
+	        return array(
+	          'subject' => t('[conference-name]: [cms-subject]'),
+	          'header' => t("Greetings [user],"),
+	          'main' => t("A item to which you are subscribed has been updated"),
+	          'footer' => array(
+	              t('This is an automatic message from [site-name]'),
+	              t('To manage your subscriptions, browse to [subscriptions-manage]'),
+	              t('You can unsubscribe at [unsubscribe-url]'),
+	          ),
+	        );
+        case 'ci-student-days-event-application':
+        case 'ci-student-days-event-application-update':          
+          return array(
+            'subject' => t('Update for [type-name]: [title]'),
+            'main' => array(
+              '[node-teaser]',
+              t('Read more [node-url]'),
+            ),
+          );
+        case 'ci-student-days-event-application-insert':
+          return array(
+            'subject' => t('New [type-name]: [title]'),
+            'main' => array(
+              '[node-teaser]',
+              t('Read more [node-url]'),            
+            ),
+          );             
+        case 'ci-student-days-event-application-comment': 
+          return array(
+            'subject' => t('Comment for [type-name]: [title]'),
+            'main' => array(
+              t('Comment by [comment-author-name]: [comment-title]'),
+              '[comment-body]',
+              t('Read more [comment-url]'),
+            ),
+          );
+			}
+			break;
+    case 'tokens':
+			// ci-student-days
+			$type = explode('-', $arg1);
+			array_shift($type); // pop off 'ci'
+			array_shift($type); // pop off 'student'
+			array_shift($type); // pop off 'days'
+			array_unshift($type, 'ci-student-days'); 
+			$type = $type + array(2 => '', 3 => '');
+			$tokens = array('user');
+      // These are the token groups that will be used for this module's messages
+      if ($type[0] == 'ci-student-days' && $type[2] == 'application') {
+        if ($type[1] == 'event') {
+          $tokens[] = 'node';
+        }
+      }
+      return $tokens;
+    case 'method update':
+      // A messaging method has been disabled ($arg1) and replaced by the new one ($arg2)
+      // Update subscriptions
+      //db_query("UPDATE {notifications} SET send_method = '%s' WHERE send_method = '%s'", $arg2, $arg1);
+      // Purge notifications queue, we may lost some notifications but it's the safest option.
+      //db_query("DELETE FROM {notifications_queue} WHERE send_method = '%s'", $arg1);
+      break;
+  }	
+}
+
+/**
+ * Creates a single message for a single event
+ * 
+ * @param $account
+ *   Destination user account
+ * @param $event
+ *   Event object which caused this notification
+ * @param $send_method
+ *   Array of subscription ids
+ * 
+ * @return
+ *   Message array 
+ */
+function ci_student_days_process_message($account, $event, $send_method, $node) {
+  // Create message. Do all this in one replacemente
+  $text = array(
+    'subject' => cms_message_part('ci-student-days-event-application-' . $event, 'subject', $send_method),
+    'header' => cms_message_part('ci-student-days-event-application-' . $event, 'header', $send_method),
+    'event'  => cms_message_part('ci-student-days-event-application-' . $event, 'main', $send_method),
+    'footer' => cms_message_part('ci-student-days-event-application-' . $event, 'footer', $send_method),
+  );
+
+  $objects = array('user' => $account, 'node' => $node);
+  $text = messaging_text_replace($text, $objects);
+
+  // Get subject out of text and build the message array
+  $subject = $text['subject'];
+  unset($text['subject']);
+  return array('subject' => $subject, 'body' => $text);
+}
+
+/**
+ * Get message part
+ * 
+ * It searches for optional message group keys for options defaulting to $type
+ * 1. $module-$type-[$event->type]-[$event->action]
+ * 2. $module-$type-[$event->type]
+ * 3. $module-$type
+ * 
+ * @param $type
+ *   Message type to send e.g. cms-event-abstract-insert
+ * @param $key
+ *   Id of message part, ie 'header'
+ * @param $method
+ *   Method by which message will be sent. Normally 'mail'
+ * @param $send_method
+ *   Module name to be prefixed to the template name. If different than notifications we first try
+ *   with that module but if not found, try again with 'notifications'
+ * 
+ * @return
+ *   Part of the message with tokens for replacement.
+ */
+function ci_student_days_message_part($type, $key, $method) {
+	$module = 'ci_student_days';
+  // If event passed check for predefined text or get optional keys from event
+  if ($type == 'event' && is_object($param)) {
+    if (isset($param->text[$key])) {
+      return $param->text[$key];  
+    } else {
+      $options = array($param->type, $param->action);
+    }
+  } elseif ($method == 'test') {
+    // Little trick for this to be testable
+    return "$type $key [type-name] [title] [site-name]";
+  } else {
+    $options = is_array($param) ? $param : array();
+  }  
+  // Buid an array for searching templates, here's where the template fallback happens
+  // I.e. $keyparts = array('cms, 'event', 'abstract', 'insert'),  will search for:
+  // - ci-student-days-event-abstract-insert
+  // - ci-student-days-event-abstract
+  // - ci-student-days-event
+  // - ci-student-days
+  $search = $keyparts = explode('-', $type);
+	for($i=0; $i<3; $i++) {
+		array_pop($search);
+		array_pop($keyparts);
+	}
+	array_unshift($search, 'ci-student-days');
+	array_unshift($keyparts, 'ci-student-days');
+  while ($keyparts) {
+    $groupkey = implode('-', $keyparts);
+     if ($text = messaging_message_part($groupkey, $key, $method)) {
+      $output = $text == MESSAGING_EMPTY ? '' : $text;
+      break;
+    }
+    // If no text trim out latest part of the key and retry
+    array_pop($keyparts);
+  }
+  if (isset($output)) {
+    // We found something, return it
+    return $output;
+  }
+  else {
+    // Failed to get message part, return information about the template not found, will help debugging
+    return "[UNDEFINED module = $module, key = $key, type = $type, method = $method, search = ". implode(',', $search) .']';
+  }
+}
+
+function ci_student_days_get_events() {
+	$sql = "SELECT * FROM ci_student_days";
+	$results = db_query($sql);
+	while($event = db_fetch_object($results)) {
+		$events[$event->eid] = $event;
+	}
+	return $events;
+}

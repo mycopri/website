@@ -1,0 +1,395 @@
+<?php
+// $Id$
+
+/*
+ * Implementation of hook_menu().
+ * 
+ * The array of items are as follows:
+ * 
+ * "title": Required. The untranslated title of the menu item.
+ * "title callback": Function to generate the title, defaults to t(). If you require only the raw string to be output, set this to FALSE.
+ * "title arguments": Arguments to send to t() or your custom callback.
+ * "description": The untranslated description of the menu item.
+ * "page callback": The function to call to display a web page when the user visits the path. If omitted, the parent menu item's callback will be used instead.
+ * "page arguments": An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component (see arg()).
+ * "access callback": A function returning a boolean value that determines whether the user has access rights to this menu item. Defaults to user_access() unless a value is inherited from a parent menu item..
+ * "access arguments": An array of arguments to pass to the access callback function. Integer values pass the corresponding URL component.
+ * "file": A file that will be included before the callbacks are accessed; this allows callback functions to be in separate files. The file should be relative to the implementing module's directory unless otherwise specified by the "file path" option.
+ * "file path": The path to the folder containing the file specified in "file". This defaults to the path to the module implementing the hook.
+ * "weight": An integer that determines relative position of items in the menu; higher-weighted items sink. Defaults to 0. When in doubt, leave this alone; the default alphabetical order is usually best.
+ * "menu_name": Optional. Set this to a custom menu if you don't want your item to be placed in Navigation.
+ * "type": A bitmask of flags describing properties of the menu item. Many shortcut bitmasks are provided as constants in menu.inc:
+ *          MENU_NORMAL_ITEM: Normal menu items show up in the menu tree and can be moved/hidden by the administrator.
+ *          MENU_CALLBACK: Callbacks simply register a path so that the correct function is fired when the URL is accessed.
+ *          MENU_SUGGESTED_ITEM: Modules may "suggest" menu items that the administrator may enable.
+ *          MENU_LOCAL_TASK: Local tasks are rendered as tabs by default.
+ *          MENU_DEFAULT_LOCAL_TASK: Every set of local tasks should provide one "default" task, that links to the same path as its parent when clicked.
+ * If the "type" key is omitted, MENU_NORMAL_ITEM is assumed.
+ */
+       
+function asce_staff_menu() {
+	$items['staff'] = array(
+	  'title' => t('Staff Menu'),
+	  'description' => t('Lists staff only links for administrating content.'),
+	  'page callback' => 'asce_staff_page',
+	  'access arguments' => array('access ci staff functionality'),
+	  'menu_name' => 'CI Staff',
+	);
+  $items['staff/views'] = array(
+    'title' => t('List Custom Pages'),
+    'description' => t('Lists custom pages.'),
+    'page callback' => 'asce_staff_views',
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  $items['staff/views-tables'] = array(
+    'title' => t('List Views Table Data'),
+    'description' => t('List Views Table Data.'),
+    'page callback' => 'asce_staff_views_tables',
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  $items['staff/views-tables/%'] = array(
+    'title' => t('List Views Table Data'),
+    'description' => t('List Views Table Data.'),
+    'page callback' => 'asce_staff_views_tables',
+    'page arguments' => array(2),
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  $items['staff/views-tables/%/%/%'] = array(
+    'title' => t('Import a View by Database'),
+    'description' => t('Import a View by Database'),
+    'page callback' => 'asce_staff_views_tables_import',
+    'page arguments' => array(2,3,4),
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  $items['staff/views/%/%'] = array(
+    'title' => t('View Custom Page Info'),
+    'description' => t('Lists custom pages.'),
+    'page callback' => 'asce_staff_view_page_info',
+    'page arguments' => array(2,3),
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );  
+  $items['staff/help/help'] = array(
+    'title' => t('Staff Menu'),
+    'description' => t('Lists staff only links for administrating content.'),
+    'page callback' => 'asce_staff_page',
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  $items['staff/update/nodes'] = array(
+    'title' => t('Staff Menu'),
+    'description' => t('Direct update of nodes through db functions so that updates are not caputred by Drupal.'),
+    'page callback' => 'asce_staff_update_nodes',
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  $items['staff/domain-lc'] = array(
+    'title' => t('Staff Menu'),
+    'description' => t('Update the domains table to add the lc to the domains.'),
+    'page callback' => 'asce_staff_update_domains',
+    'access arguments' => array('access ci staff functionality'),
+    'menu_name' => 'CI Staff',
+  );
+  return $items;
+}
+
+function asce_staff_update_nodes() {
+	// Query all the nodes in the db
+	$results = db_query("SELECT * FROM {node} WHERE type in ('blog_post', 'wiki_post', 'advpoll_binary', 'advpoll_ranking')" );
+	
+	// Now load up each of these nodes to determine the revision id
+	while ($row = db_fetch_object($results)) {
+		$node = node_load($row->nid);
+		//dsm($node);
+		if (isset($node->domains[-1])) {
+			$flag = 'Not an Action';
+			$is_action = $node->field_action[0]['value'] == 1 ? TRUE : FALSE;
+			$is_empty_task_due = empty($node->field_task_due[0]['value']) ? TRUE : FALSE;
+			$is_empty_date_completed = empty($node->field_date_completed[0]['value']) ? TRUE : FALSE;
+			$is_100_completion = $node->field_completion[0]['value'] == 100 ? TRUE : FALSE;
+			$is_empty_completion = empty($node->field_completion[0]['value']) ? TRUE : FALSE;
+
+			if ( ($is_action && !$is_empty_task_due && $is_empty_date_completed) && (!$is_100_completion || $is_empty_completion)) {
+				$flag = "Scheduled";
+				$task_due = drupal_clone(date_convert($node->field_task_due[0]['value'], DATE_ISO, DATE_OBJECT));
+				$now = drupal_clone(date_convert(date(DATE_FORMAT_ISO), DATE_ISO, DATE_OBJECT));
+				$diff = date_format($task_due, 'U') - date_format($now, 'U');
+				if ($diff < 0) {
+					//$flag = date_difference($now, $task_due, 'days', DATE_OBJECT) . ' days late!';
+					$flag = 'Past due';
+				}
+			}
+
+			if ( ($is_action && $is_empty_task_due && $is_empty_date_completed) && (!$is_100_completion || $is_empty_completion)) {
+				$flag = "Unscheduled";
+			}
+
+			if ( $is_action && ($is_100_completion || !$is_empty_date_completed)) {
+				$flag = "Completed";
+			}
+			//dsm($node);
+			$row->nid = $node->nid;
+			$row->vid = $node->vid;
+			$row->field_logic_action_status_value = $flag;
+			drupal_write_record('content_field_logic_action_status', $row, array('nid', 'vid'));
+			cache_clear_all('content:' . $row->nid . ':' . $row->vid, 'cache_content', FALSE);
+			$mess .= $node->nid . '-->' . $node->type . '-->' . $flag . '<br/>';
+		}
+	}
+	return $mess;
+}
+
+function asce_staff_perm() {
+	return array('access ci staff functionality');
+}
+
+function asce_staff_page() {
+	$item = menu_get_item();
+  $content = system_admin_menu_block($item);
+  return theme('node_add_list', $content);//$items[] = menu_get_item('staff');
+	//return theme('node_add_list', $items);
+}
+
+function asce_staff_views_tables($vid = NULL, $db = NULL) {
+  $main = db_query("SELECT * FROM {views_view}");
+  db_set_active('live');
+  $live = db_query("SELECT * FROM {views_view}");
+  db_set_active('default');
+  if (!$vid) {
+  $output = '<div><div><h1>Local Site</h1>';
+  while ($row = db_fetch_object($main)) {  	
+  	$output .= '<a href="/staff/views-tables/' . $row->vid . '/local">' . $row->name . '</a>';
+  	$output .= ' <a href="/staff/views-tables/view/' . $row->vid . '/local">' . '        View</a>' . '<br/>';
+  }
+  $output .= '</div>';
+  
+  $output .= '<div><h1>Live Site</h1>';
+  while ($row = db_fetch_object($live)) {    
+    $output .= '<a href="/staff/views-tables/' . $row->vid . '/live">' . $row->name . '</a>';
+    $output .= ' <a href="/staff/views-tables/import/' . $row->vid . '/live">' . '        Import</a>';
+    $output .= ' <a href="/staff/views-tables/view/' . $row->vid . '/live">' . '        View</a>' . '<br/>';
+  }
+  $output .= '</div>';
+  }
+  else {
+  	if ($db == 'local') {
+  		db_set_active('default');
+  	}
+  	else {
+  		db_set_active('live');
+  	}
+  	$results = db_query("SELECT * FROM {views_display} WHERE vid=%d", $vid);
+  	while ($display = db_fetch_object($results)) {
+  		$output .= $display->display_title . '-->' . $display->id;
+  		$output .= kpr($display, TRUE);
+  		$output .= kpr(unserialize($display->display_options), TRUE);
+  	}
+  }
+  db_set_active('default');
+  return $output;
+}
+
+function asce_staff_views_tables_import ($op = 'view', $vid = NULL, $db = 'local') {
+	switch ($op) {
+		case 'view':
+      $new_view = views_ui_cache_load($view->name);
+      dsm($new_view);
+      db_set_active('default');
+			return '';
+		case 'clean':
+			db_set_active('default');
+			if ($vid == 'all') {
+				$views = db_query("SELECT * FROM {views_view}");
+			}
+			while($view = db_fetch_object($views)) {
+				$loaded_view = views_ui_cache_load($view->name);
+				if ($view->tag != 'default') {
+					$new_view = views_ui_cache_load($view->name);
+					foreach($new_view->display as $key => $item) {
+						unset($new_view->display[$key]->display_options['header']);
+						unset($new_view->display[$key]->display_options['footer']);
+						unset($new_view->display[$key]->display_options['empty']);
+						$new_view->save();
+					}
+				}
+			}				
+			db_set_active('default');
+			return '';
+		case 'import':
+			db_set_active('main');
+			if (is_string($vid)) {
+				$count = 0;
+				if ($vid == 'all') {
+					$views = db_query("SELECT * FROM {views_view}");
+				}
+				else {
+					$views = db_query("SELECT * FROM {views_view} WHERE tag='%s'", $vid);
+				}
+        while($view = db_fetch_object($views)) {
+        	$new_view = views_ui_cache_load($view->name);
+        	db_set_active('default');
+        	// Check to make sure the view does not already exist
+        	$check = db_fetch_object(db_query("SELECT * FROM {views_view} WHERE name='%s'", $new_view->name));
+        	if($check) {
+        	  $output .= "<em><b>{$new_view->name} already existed. Did not save.</em></b><br/>";
+        	}
+        	else {
+        		$output .= "{$new_view->name} was saved.<br/>";
+        		$new_view->vid = 'new';
+        		$new_view->save();
+        	}	
+        	$count++;
+        	db_set_active('main');
+        }
+			}
+			else {
+				$view = db_fetch_object(db_query("SELECT * FROM {views_view} WHERE vid=%d", $vid));
+				$new_view = views_ui_cache_load($view->name);
+				dsm($new_view);
+				db_set_active('default');
+				$new_view->vid = 'new';
+				//$new_view->save();
+			}
+			db_set_active('default');
+			return $output . 'Loaded ' . $count . ' views.';
+	}
+	db_set_active('default');
+}
+
+function asce_staff_views() {
+	// Group the various tasks
+	$sql = "SELECT task from {page_manager_handlers} GROUP BY task";
+	$results = db_query($sql);
+	while ($row = db_fetch_object($results)) {
+		$tasks[$row->task] = $row->task;
+	}
+	
+	foreach($tasks as $task) {
+		$sql = "SELECT * FROM {page_manager_handlers} WHERE task='%s'";
+		$results = db_query($sql, $task);
+		$output .= '<h1>Variants for ' . $task . '</h1>';
+		while ($row = db_fetch_object($results)) {
+			$conf = unserialize($row->conf);
+			$output .= _insert_tab() . '<p><a href="/staff/views/' . $row->did . '">' . $conf['title'] . '</a></p>';
+			// Now look at each of the panes in this
+			$sql = "SELECT * FROM {panels_pane} WHERE did=%d";
+			$results2 = db_query($sql, $conf['did']);
+			while ($row2 = db_fetch_object($results2)) {
+				//$output .= '<p>' . _insert_tab(2) . ' pid=' . $row2->pid . ', '. 'did=' . $row2->did . ', ' . $row2->panel . ', ' . $row2->type . ', ' . $row2->subtype . '</p>';
+				$output .= '<p>' . _insert_tab(2) . ' ' . $row2->panel . ', ' . $row2->type . ', ' . $row2->subtype . '</p>';
+				if ($row2->type == 'panels_mini') {
+					$sql = "SELECT did FROM {panels_mini} WHERE name='%s'";
+					$mini_panel_did = db_result(db_query($sql, $row2->subtype));
+					$sql = "SELECT * FROM {panels_pane} WHERE did=%d";
+					$results3 = db_query($sql, $mini_panel_did);
+					while($row3 = db_fetch_object($results3)) {
+						$output .= '<p><em>' . _insert_tab(3) . ' ' . $row3->type . ', ' . $row3->subtype . '</em></p>';
+						if ($row3->type == 'block') {
+							$parts = explode('-', $row3->subtype);
+							if ($parts[0] == 'quicktabs') {
+								$sql = "SELECT * FROM {quicktabs} WHERE qtid=%d";
+								$results3 = db_query($sql, $parts[1]);
+								while($row3 = db_fetch_object($results3)) {
+									$tabs = unserialize($row3->tabs);
+									$output .= kpr($tabs, TRUE);
+								}
+							}
+						}
+					  if ($row3->type == 'panels_mini') {
+              $sql = "SELECT did FROM {panels_mini} WHERE name='%s'";
+              $mini_panel_did = db_result(db_query($sql, $row3->subtype));
+              $sql = "SELECT * FROM {panels_pane} WHERE did=%d";
+              $results4 = db_query($sql, $mini_panel_did);
+              while($row4 = db_fetch_object($results3)) {
+                $output .= '<p><em>' . _insert_tab(3) . ' ' . $row4->type . ', ' . $row4->subtype . '</em></p>';
+                if ($row4->type == 'block') {
+                  $parts = explode('-', $row4->subtype);
+                  if ($parts[0] == 'quicktabs') {
+                    $sql = "SELECT * FROM {quicktabs} WHERE qtid=%d";
+                    $results4 = db_query($sql, $parts[1]);
+                    while($row4 = db_fetch_object($results4)) {
+                      $tabs = unserialize($row4->tabs);
+                      $output .= kpr($tabs, TRUE);
+                    }
+                  }
+                }
+              }
+            }
+					}
+				}
+				if ($row2->type == 'block') {
+					$parts = explode('-', $row2->subtype);
+					if ($parts[0] == 'quicktabs') {
+						$sql = "SELECT * FROM {quicktabs} WHERE qtid=%d";
+						$results3 = db_query($sql, $parts[1]);
+						while($row3 = db_fetch_object($results3)) {
+							$tabs = unserialize($row3->tabs);
+							$output .= kpr($tabs, TRUE);
+						}
+					}
+				}
+			}
+		}
+	}
+  return $output;
+}
+
+function _insert_tab($num = 1) {
+	for($i = 0; $i < $num; $i++) {
+		$output .= '&nbsp&nbsp&nbsp&nbsp';
+	}
+	return $output;
+}
+
+function asce_staff_view_page_info($did) {
+  $sql = "SELECT conf FROM {page_manager_handlers} WHERE did=%d";
+  $info = unserialize(db_result(db_query($sql, $did)));
+  $output = kpr($info, TRUE);
+  $sql = "SELECT * FROM {panels_display} WHERE did=%d";
+  $output .= kpr(panels_load_display($info['did']), TRUE);
+  
+  return $output;
+}
+
+/*
+ *  Implementation of hook_form_alter ()
+ *  Set the input format default for CI staff to Full HTML
+ */
+function asce_staff_form_alter(&$form, &$form_state, $form_id) {
+	global $user;
+	if ($form_id == 'ci_content_node_form') {
+		if (!user_access('access ci staff functionality', $user)) {
+			return;
+		}
+		//unset($form['body_field']['format']);
+		//$format = filter_form(2);
+		//$form['body_field']['format'] = $format;
+	}
+}
+
+function computed_field_field_views_teaser_compute(&$node, $field, &$node_field) {
+	$teaser = TRUE;
+	$page = FALSE;
+	$node2 = node_load($node->nid);
+	$node2->field_views_teaser[0]['value'] = '';
+	$node2 = node_build_content($node2, $teaser, $page);
+	unset($node2->content['field_front_layout']);
+	unset($node2->content['field_image']);
+	$content = drupal_render($node2->content);
+	if ($teaser) {
+		$node2->teaser = $content;
+		unset($node2->body);
+	}
+	else {
+		$node2->body = $content;
+		unset($node2->teaser);
+	}
+	node_invoke_nodeapi($node2, 'alter', $teaser, $page);
+
+	$output = ed_readmore_link_place($node2->teaser, $node2, 'inline');
+	$node_field[0]['value'] = $output;
+}

@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function abstract_schema() {
+	return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function abstract_uninstall() {
+  // Remove all database tables.
+  drupal_uninstall_schema('asce_groups');
+}
+
+function abstract_install() {
+	//db_query("UPDATE {system} SET weight = 10 WHERE name = 'abstract'");
+}
+

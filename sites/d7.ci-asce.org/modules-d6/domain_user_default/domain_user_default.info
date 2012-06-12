@@ -1,0 +1,13 @@
+; $Id: domain_user_default.info,v 1.1.2.1 2008/07/03 20:17:52 jhedstrom Exp $
+name = Domain User Default
+description = Provide users with a default domain
+package = Domain Access
+dependencies[] = domain
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-12-09
+version = "6.x-1.2"
+core = "6.x"
+project = "domain_user_default"
+datestamp = "1291927842"
+

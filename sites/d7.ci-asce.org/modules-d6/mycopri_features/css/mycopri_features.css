@@ -1,0 +1,64 @@
+.mycopri-features-activity {
+	font-family: Arial,Verdana,sans-serif;
+	border-bottom: 1px solid #D7D6D3;
+	background: none;
+	clear: both;
+	overflow: hidden;
+}
+
+.mycopri-features-activity-icon {
+	padding-right: 3px;
+	padding-bottom: 3px;
+	float: left;
+}
+
+.mycopri-features-member {
+	font-family: Arial,Verdana,sans-serif;
+	overflow: hidden;
+}
+
+.mycopri-features-member p {
+	font-family: Arial,Verdana,sans-serif;
+	padding: 0;
+	margin: 0;	
+}
+
+.mycopri-features-member-photo {
+	padding-right: 1em;
+	margin-bottom: 0.5em;
+	float: left;
+	width: 35px;
+	overflow: hidden;
+}
+
+.mycopri-features-user-photo {
+	padding-right: 2em;
+	padding-bottom: 3px;
+	float: left;
+}
+
+.mycopri-features-user-block h2 {
+	border-style: none;
+}
+
+.mycopri-features-user-block h2 a:hover, .mycopri-features-user-block h2 a:link, 
+.mycopri-features-user-block h2 a:visited {
+	color: #E04606;
+	font-size: 1.5em;
+}
+
+.mycopri-features-committee-list {
+	clear: both;
+}
+
+.mycopri-features-committee-list li {
+	background: none;
+}
+
+.mycopri-features-committee-list h2 a:link, .mycopri-features-committee-list h2 a:hover, 
+.mycopri-features-committee-list h2 a:visited {
+	font-size: 0.65em;
+	padding-left: 3px;
+	float: right;
+	color: #00FF00;
+} 

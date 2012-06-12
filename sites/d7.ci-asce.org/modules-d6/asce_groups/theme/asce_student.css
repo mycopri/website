@@ -1,0 +1,23 @@
+.view-id-ci_student_roster table td, .view-id-ci_student_roster {
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.view-id-ci_student_roster .item-list ul li {
+	border-top: #CCCCCC 1px dotted;
+	padding-top: 4px;
+	list-style: none;
+	background: none;
+	margin-left: 0;
+	padding-left: 0em;
+	text-indent: -1em;
+}
+
+.view-id-ci_student_roster tr.row-first td, .view-id-ci_student_roster ul li:first-child {
+  border-top: none;
+}
+
+.view-id-ci_student_roster div.picture, .view-id-ci_student_roster div.picture {
+  float: none;
+}
+

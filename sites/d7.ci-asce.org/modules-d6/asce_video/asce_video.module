@@ -1,0 +1,212 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_init().
+ */
+function asce_video_init() {
+  drupal_add_css(drupal_get_path('module', 'asce_video') .'/theme/asce-video.css');
+}
+
+/**
+ * Implementation of CCK's hook_field_formatter_info().
+ */
+function asce_video_field_formatter_info() {
+	$formatters = array(
+	  'preview' => array(
+      'label' => 'Video Preview',
+      'field types' => array('filefield'),
+      'description' => 'Display a preview size of the video.',
+	    ),
+  	);
+  return $formatters;
+}
+
+function asce_video_perm() {
+	return array('upload video files');
+}
+
+/**
+ * Implementation of hook_theme(). Register views theming functions.
+ */
+function asce_video_theme() {
+  $theme = array();
+  $theme['asce_video_formatter_preview'] = array(
+    'arguments' => array('element' => NULL),
+  );
+  $theme['asce_video_flowplayer'] = array(
+    'arguments' => array(
+      'config' => NULL,
+      'id' => 'flowplayer',
+      'attributes' => array(),
+      'contents' => '',
+    ),
+  );
+  return $theme;
+}
+
+function theme_asce_video_formatter_preview($element) {
+	//drupal_set_message('asce_video_formatter' . kpr($element, TRUE));
+  if (empty($element['#item']['fid']))
+    return '';
+  // Get our field information to determine if we are checking conversion
+  $field = content_fields($element['#field_name'], $element['#type_name']);
+  //dsm($field);
+  if (!empty($field['list_field']) && !$element['#item']['list'])
+    return '';
+
+  // The following lines are copied from video_get_player()
+  // Setup our node object to be passed along with the player.
+  $node = $element['#node'];
+  // Setup our video object
+  module_load_include('inc', 'video', '/includes/video_helper');
+  $video_helper = new video_helper;
+  $video = $video_helper->video_object($element);
+  
+  // Prepare the video object for flowplayer, this code taken from theme_video_flv
+  // kjh: use a playlist to display the thumbnail if not auto playing
+  if (!$video->autoplay && $video->thumbnail->url) {
+  	$options = array(
+        'playlist' => array($video->thumbnail->url,
+  	      array('url' => urlencode($video->files->{$video->player}->url),
+            'autoPlay' => $video->autoplay,
+            'autoBuffering' => $video->autobuffering,
+  	      ),),);
+  } else {
+  	$options = array(
+        'clip' => array('url' => urlencode($video->files->{$video->player}->url),
+          'autoPlay' => $video->autoplay,
+          'autoBuffering' => $video->autobuffering,
+  	),);
+  }
+
+  $themed_output = theme(
+          'asce_video_flowplayer',
+          $options,
+          $video->formatter,
+          // adding 24px to height #973636
+          array('style' => 'width:' . $video->player_width . 'px;height:' . $video->player_height + 24 . 'px;')
+  );
+  return $themed_output;
+}
+
+function theme_asce_video_flowplayer($config = NULL, $id = 'flowplayer', $attributes = array(), $contents = '') {  
+	// Prepare the ID.
+  $id = form_clean_id($id);
+
+  // Prepare the attributes, passing in the flowplayer class.
+  if (isset($attributes['class'])) {
+    $attributes['class'] .= ' asce-flowplayer';
+  }
+  else {
+    $attributes['class'] = 'asce-flowplayer';
+  }
+  $attributes = drupal_attributes($attributes);
+
+  // Add the JavaScript to handle the element.
+  flowplayer_add('#'. $id, $config);
+
+  // Return the markup.
+  return "<div id='$id' $attributes>$contents</div>";
+}
+
+/**
+ * Copied this from image module
+ * Function to other modules to use to create image nodes.
+ *
+ * @param $filepath
+ *   String filepath of an image file. Note that this file will be moved into
+ *   the image module's images directory.
+ * @param $title
+ *   String to be used as the node's title. If this is ommitted the filename
+ *   will be used.
+ * @param $body
+ *   String to be used as the node's body.
+ * @param $taxonomy
+ *   Taxonomy terms to assign to the node if the taxonomy.module is installed.
+ * @param $keep_original
+ *   Boolean to indicate whether the original file should be deleted
+ *
+ * @return
+ *   A node object if the node is created successfully or FALSE on error.
+ */
+function asce_video_import() {
+	global $user;
+	module_load_include('inc', 'node', 'node.pages');
+	
+	drupal_set_message('The import is disabled in asce_videos module!');
+	return '';
+	
+	$type = 'video';
+	$types = node_get_types();
+	$type = isset($type) ? str_replace('-', '_', $type) : NULL;
+  
+  // Scan a directory for files
+  $video_files = file_scan_directory('tmp/flv', '.*');
+  ksort($video_files);
+  
+  // Move the video file from the import directory to the videos file in drupal
+  $dest = 'sites/default/files/videos';
+  /*foreach ($video_files as $video_files) {
+  	// If a node type has been specified, validate its existence.
+  	if (isset($types[$type]) && node_access('create', $type)) {
+    // Initialize settings:
+    $node = array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''), 'type' => $type, 'language' => '');
+
+    drupal_set_title(t('Automatically create @names', array('@name' => $types[$type]->name)));
+  	}
+  	//dsm($node);
+  	$node['is_new'] = TRUE;
+  	$node = (object)$node;
+  	 
+  	$original_source = $video_files->filename;
+  	$original_filename = $video_files->basename;
+  	$source = $original_source;
+  	file_copy($source, $dest);
+  	//$message .= $original_source . ' was saved to ' . $source . '<br/>';
+
+  	$file = new stdClass();
+  	$file->filename = $original_filename;
+  	$file->filepath = $source;
+  	$file->filemime = file_get_mimetype($file->filename);
+  	$file->filesize = filesize($source);
+  	$file->status = 1;
+  	$file->timestamp = time();
+  	$file->uid = $user->uid;
+  	drupal_write_record('files', $file);
+
+  	$file = (array)$file;
+  	$file['list'] = 1;
+
+  	// Now we need to create the thumbnails
+  	module_load_include('inc', 'video', '/includes/transcoder');
+  	$transcoder = new video_transcoder;
+  	$thumbs = $transcoder->generate_thumbnails((array)$file);
+  	$data['dimensions'] = '360x240';
+  	$data['player_dimensions'] = '360x240';
+  	$data['video_thumb'] = $thumbs[3]->filepath;
+  	$file['data'] = $data;
+  	$node->title = $original_filename;
+  	$node->field_video[] = $file;
+  	//node_save($node);
+  	$message .= '<a href="../../node/' . $node->nid . '">' . $node->title . "</a><br/>";
+  	unset($node);
+  	unset($file);
+  	unset($thumbs);
+  	unset($transcoder);
+  	unset($data);
+  }*/
+  return $message;
+}
+
+function asce_video_menu() {
+	/*$items['node/import/video'] = array(
+    'title' => t('Import Bulk Videos'),
+    'description' => t('Import multiple video files and create video nodes out of them.'),
+    'page callback' => 'asce_video_import',
+    'access arguments' => array('access marvin test bed'),
+  );*/
+  
+  return $items;
+	
+}

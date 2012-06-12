@@ -1,0 +1,46 @@
+$Id: README,v 1.1.2.5 2009/09/03 17:24:39 mradcliffe Exp $
+
+OG Titles
+
+Organic Groups Titles is a simple module that allows you to create arbitrary member titles for each membership of a group.
+
+Additional features have been added including configuration for select list-based titles. With select list-based titles you can also choose a sort order. With the old style the weight will remain null. 
+
+Also, added permission for a user to access their own title.
+
+NOTE: With these major changes you need to run 'update.php' to 6003,6004, and 6005! The update path does not add in weights.
+
+Dependencies:
+
+   * Organic groups (1.x or 2.x branches both work)
+   * Organic groups views
+
+Usage: 
+
+   * Clone an og view such as og_members or og_members_block, and add in the member title field.  Or create your own 'member list' view.
+      * You will need to add in >>OG TITLES<< relationship or the cloned view will not work. This is a non-trivial issue with Og's og_uid views data.
+			* For each og_titles field, filter, or sort that you use, confirm that you do not use the relationship.
+			* For each og_uid field, filter, or sort that you use, confirm that you >>DO<< use the relationship.
+   * Group managers can manage member titles by going to og/users/%/titles where % is the group node id.
+   * Users with permissions can access their title at og/manage/%/title
+	    * Og Titles provides a view called 'og_my_titles' to replace Og's 'og_my' view. Please disable the latter.
+   * Group managers can add/modify/delete titles from a list per group at node/%/titles
+   * Site administrators can configure og titles behavior by going to admin/og/og_titles
+
+That's it!
+
+
+API:
+
+   * You can define your own selection options besides 'select input' or 'text input'.
+
+   * hook_ogt_type()
+      * return an array of options in the form of
+         * 'my_form_format' => translated title for my_form_format
+
+   * Each type must have a form callback and a submit callback such as
+      * my_form_format(&$form, &$form_state, $gid, $uid = NULL)
+         * $form is the relative form element for a particular user's title.
+         * no return value necessary
+      * my_form_format_submit($gid, $uid, $title, &$form, &$form_state)
+         * returns a boolean true or false whether or not you succeeded in committing the changes.

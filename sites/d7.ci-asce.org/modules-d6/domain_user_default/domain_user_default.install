@@ -1,0 +1,62 @@
+<?php
+
+// $Id: domain_user_default.install,v 1.1.2.2 2009/12/04 22:51:00 nonsie Exp $
+
+/**
+ * @file
+ * Domain User Default install hooks.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function domain_user_default_install() {
+  drupal_install_schema('domain_user_default');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function domain_user_default_uninstall() {
+  drupal_uninstall_schema('domain_user_default');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function domain_user_default_schema() {
+  $schema['domain_user_default'] = array(
+    'description' => t('Map users to a domain'),
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('The {users} uid to associate with the domain_id'),
+      ),
+      'domain_id' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => t('The {domain} domain_id'),
+      ),
+    ),
+    'unique keys' => array(
+      'uid' => array('uid'),
+    ),
+    'indexes' => array(
+      'domain_id' => array('domain_id'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Upgrade to Domain Access 2.x version
+ */
+function domain_user_default_update_6200() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {domain_user_default} SET domain_id = 0 WHERE domain_id = -1");
+  return $ret;
+}

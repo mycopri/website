@@ -1,0 +1,5 @@
+; $Id$
+name = CI Content
+description = "Creates a CI Content Type"
+package = "ASCE - ci"
+core = 6.x

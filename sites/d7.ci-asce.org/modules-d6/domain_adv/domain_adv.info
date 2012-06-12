@@ -1,0 +1,13 @@
+; $Id: domain_adv.info,v 1.1 2009/01/05 05:01:38 gordon Exp $
+name = Domain Advanced
+description = Changes Domain access modules to use db_rewrite_query() instead of node access. This will allow better integration with other node access modules.
+dependencies[] = domain
+core = 6.x
+package = Domain Access
+
+; Information added by drupal.org packaging script on 2010-11-22
+version = "6.x-1.0-rc3"
+core = "6.x"
+project = "domain_adv"
+datestamp = "1290401179"
+

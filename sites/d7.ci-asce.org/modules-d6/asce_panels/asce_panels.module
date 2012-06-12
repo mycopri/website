@@ -1,0 +1,39 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Definition of the 'asce' panel style.
+ */
+
+
+//----------------------------------------------------------------------------
+// Panels hooks.
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function asce_panels_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'page_manager' || $module == 'panels') {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function asce_panels_ctools_plugin_api($module, $api) {
+  if ($module == 'panels' && $api == 'styles') {
+    // Check and return correct style version
+    return array('version' => asce_panels_style_version());
+  }
+}
+
+/**
+ * Determine which style version we shoud declare.
+ */
+function asce_panels_style_version() {
+  // If ctools api version is greater than 1.7 then we should return version 2
+  $new = version_compare(PANELS_REQUIRED_CTOOLS_API, 1.7, '>=');
+  return $new ? 2 : 1;
+}

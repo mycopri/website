@@ -1,0 +1,222 @@
+<?php
+// $Id$
+
+/*
+ * Implementation of hook_menu().
+ * 
+ * The array of items are as follows:
+ * 
+ * "title": Required. The untranslated title of the menu item.
+ * "title callback": Function to generate the title, defaults to t(). If you require only the raw string to be output, set this to FALSE.
+ * "title arguments": Arguments to send to t() or your custom callback.
+ * "description": The untranslated description of the menu item.
+ * "page callback": The function to call to display a web page when the user visits the path. If omitted, the parent menu item's callback will be used instead.
+ * "page arguments": An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component (see arg()).
+ * "access callback": A function returning a boolean value that determines whether the user has access rights to this menu item. Defaults to user_access() unless a value is inherited from a parent menu item..
+ * "access arguments": An array of arguments to pass to the access callback function. Integer values pass the corresponding URL component.
+ * "file": A file that will be included before the callbacks are accessed; this allows callback functions to be in separate files. The file should be relative to the implementing module's directory unless otherwise specified by the "file path" option.
+ * "file path": The path to the folder containing the file specified in "file". This defaults to the path to the module implementing the hook.
+ * "weight": An integer that determines relative position of items in the menu; higher-weighted items sink. Defaults to 0. When in doubt, leave this alone; the default alphabetical order is usually best.
+ * "menu_name": Optional. Set this to a custom menu if you don't want your item to be placed in Navigation.
+ * "type": A bitmask of flags describing properties of the menu item. Many shortcut bitmasks are provided as constants in menu.inc:
+ *          MENU_NORMAL_ITEM: Normal menu items show up in the menu tree and can be moved/hidden by the administrator.
+ *          MENU_CALLBACK: Callbacks simply register a path so that the correct function is fired when the URL is accessed.
+ *          MENU_SUGGESTED_ITEM: Modules may "suggest" menu items that the administrator may enable.
+ *          MENU_LOCAL_TASK: Local tasks are rendered as tabs by default.
+ *          MENU_DEFAULT_LOCAL_TASK: Every set of local tasks should provide one "default" task, that links to the same path as its parent when clicked.
+ * If the "type" key is omitted, MENU_NORMAL_ITEM is assumed.
+ */
+
+module_load_include('inc', 'asce_books', 'asce_books.pages');
+
+function asce_books_menu() {
+	$items['test/books'] = array(
+    'title' => t('Test Book Module'),
+    'description' => t('Test the ASCe Books Module'),
+    'page callback' => 'asce_books_test',
+    'access callback' => TRUE,
+    'menu_name' => 'ASCE Books',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_books.pages.inc',
+  );
+	$items['test/books/%'] = array(
+	  'title' => t('Test Book Module'),
+	  'description' => t('Test the ASCe Books Module'),
+	  'page callback' => 'asce_books_test',
+	  'page arguments' => array(2),
+    'access callback' => TRUE,
+	  'menu_name' => 'ASCE Books',
+	  'type' => MENU_CALLBACK,
+	  'file' => 'asce_books.pages.inc',
+	);
+	 $items['test/books/%/%'] = array(
+    'title' => t('Test Book Module'),
+    'description' => t('Test the ASCe Books Module'),
+    'page callback' => 'asce_books_test',
+    'page arguments' => array(2,3),
+    'access callback' => TRUE,
+    'menu_name' => 'ASCE Books',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_books.pages.inc',
+  );
+	 $items['test/books/%/%/%'] = array(
+    'title' => t('Test Book Module'),
+    'description' => t('Test the ASCe Books Module'),
+    'page callback' => 'asce_books_test',
+    'page arguments' => array(2,3,4),
+    'access callback' => TRUE,
+    'menu_name' => 'ASCE Books',
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_books.pages.inc',
+  );
+ return $items;
+}
+
+function asce_books_theme() {
+  return array(
+    'asce_books_comment_block' => array(
+      'arguments' => array('nids' => array()),
+    ),
+  );
+}
+
+function asce_books_block($op = 'list', $delta = 0, $edit = array()) {
+  // We only want to show this block for book pages
+  
+	if ($op == 'list') {
+		// returns array, with the following key-value pairs:
+		//
+		// 'info': (required) The human-readable name of the block. This is used to identify the block on administration screens, and is not displayed to non-administrative users.
+		// 'cache': A bitmask of flags describing how the block should behave with respect to block caching. The following shortcut bitmasks are provided as constants in block.module:
+		//    BLOCK_CACHE_PER_ROLE (default): The block can change depending on the roles the user viewing the page belongs to.
+		//    BLOCK_CACHE_PER_USER: The block can change depending on the user viewing the page. This setting can be resource-consuming for sites with large number of users, and should only be used when BLOCK_CACHE_PER_ROLE is not sufficient.
+		//    BLOCK_CACHE_PER_PAGE: The block can change depending on the page being viewed.
+		//    BLOCK_CACHE_GLOBAL: The block is the same for every user on every page where it is visible.
+		//    BLOCK_NO_CACHE: The block should not get cached.
+		// 'weight': (optional) Initial value for the ordering weight of this block. Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen.
+		// 'status': (optional) Initial value for block enabled status. (1 = enabled, 0 = disabled). Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen.
+		// 'region': (optional) Initial value for theme region within which this block is set. Most modules do not provide an initial value, and any value provided can be modified by a user on the block configuration screen. Note: If you set a region that isn't available in the currently enabled theme, the block will be disabled.
+		// 'visibility': (optional) Initial value for the visibility flag, which tells how to interpret the 'pages' value. Possible values are:
+		//    0: Show on all pages except listed pages. 'pages' lists the paths where the block should not be shown.
+		//    1: Show only on listed pages. 'pages' lists the paths where the block should be shown.
+		//    2: Use custom PHP code to determine visibility. 'pages' gives the PHP code to use.
+		//  Most modules do not provide an initial value for 'visibility' or 'pages', and any value provided can be modified by a user on the block configuration screen.
+		// 'pages': (optional) See 'visibility' above.
+
+		$blocks[0]['info'] = t('Book Recent Comments');
+		$blocks[0]['cache'] = BLOCK_CACHE_PER_PAGE;
+		// Define the ASCE Dynamic Advanced Book Block
+		$block_title = '';
+    $blocks[1]['info'] = 'ASCE Dynamic Advanced book block';
+    $blocks[1]['cache'] = BLOCK_CACHE_PER_ROLE | BLOCK_CACHE_PER_PAGE;
+		
+    return $blocks;
+	}
+
+	if ($op == 'view') {
+		// Always get the Book Node
+		$node = node_load(arg(1));
+		$top_node = node_load($node->book['bid']);
+		
+		// Display the Book Recent Comments block
+		if ($delta == 0 && user_access('access comments')) {
+			// Get the the contents of the entire book in a menu like tree array
+			$tree = book_menu_subtree_data($top_node->book);
+			// Create an array of all the nodes in this book
+			$book_pages = asce_books_traverse($tree);
+			// Create a array of nids
+			$nids = array();
+			foreach($book_pages as $node) {
+				$nids[] = $node->nid;
+			}
+			$block['subject'] = t('Recent comments');
+			$block['content'] = theme('asce_books_comment_block', $nids);
+			return $block;
+		}
+		
+		// Display the Dynamic Advanced Book block
+		if ($delta == 1) {
+			$toplevel = array($top_node->nid);
+			if (!empty($toplevel)) {
+				$tree = recursive_book_array_builder($toplevel);
+				$trail = book_trail_builder();
+
+				if (empty($trail)) {
+					$trail = array();
+				}
+				$block_title = '';
+				$block_title = $top_node->title;
+				$block['subject'] = $block_title;
+				$block['content'] = theme('menu_creation_by_array', $tree, $trail);
+			}
+			return $block;
+		}
+	}
+	
+  if ($op == 'configure') {
+    
+  }
+  
+  if ($op == 'save') {
+    
+  }
+}
+
+/**
+ * Find a number of recent comments. This is done in two steps.
+ *   1. Find the n (specified by $number) nodes that have the most recent
+ *      comments.  This is done by querying node_comment_statistics which has
+ *      an index on last_comment_timestamp, and is thus a fast query.
+ *   2. Loading the information from the comments table based on the nids found
+ *      in step 1.
+ *
+ * @param $number
+ *   (optional) The maximum number of comments to find.
+ * @return
+ *   An array of comment objects each containing a nid,
+ *   subject, cid, and timestamp, or an empty array if there are no recent
+ *   comments visible to the current user.
+ */
+function asce_books_comment_get_recent($nids, $number = 5) {
+  $comments = array();
+  if (!empty($nids)) {
+    // From among the comments on the nodes selected in the first query,
+    // find the $number most recent comments.
+    $result = db_query_range(
+                              'SELECT c.nid, c.subject, c.cid, c.timestamp, c.comment, c.name, c.uid 
+                               FROM {comments} c 
+                               INNER JOIN {node} n ON n.nid = c.nid 
+                               WHERE c.nid IN ('. implode(',', $nids) .') AND n.status = 1 
+                               AND c.status = %d ORDER BY c.cid DESC', COMMENT_PUBLISHED, 0, $number);
+    while ($comment = db_fetch_object($result)) {
+      $comments[] = $comment;
+    }
+  }
+  return $comments;
+}
+
+/**
+ * Returns a formatted list of recent comments to be displayed in the comment block.
+ *
+ * @return
+ *   The comment list HTML.
+ * @ingroup themeable
+ */
+function theme_asce_books_comment_block($nids = array()) {
+  $items = array();
+  $comments = asce_books_comment_get_recent($nids);
+  foreach ($comments as $comment) {
+  	$node = node_load($comment->nid);
+  	$link_comment = l($comment->subject, 
+                 'node/'. $comment->nid, 
+                 array('fragment' => 'comment-'. $comment->cid));
+    $link_node = l($node->title,
+                   'node/' . $comment->nid);
+    $items[] =  $link_comment . ' by ' . $comment->name .
+                 ' in ' . $link_node . '<br/>' .  
+                 t('@time ago', array('@time' => format_interval(time() - $comment->timestamp)));
+  }
+  if ($items) {
+    return theme('item_list', $items);
+  }
+}

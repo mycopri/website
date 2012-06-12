@@ -1,0 +1,427 @@
+<?php
+// $Id$
+
+/*
+ * Implementation of hook_menu().
+ * 
+ * The array of items are as follows:
+ * 
+ * "title": Required. The untranslated title of the menu item.
+ * "title callback": Function to generate the title, defaults to t(). If you require only the raw string to be output, set this to FALSE.
+ * "title arguments": Arguments to send to t() or your custom callback.
+ * "description": The untranslated description of the menu item.
+ * "page callback": The function to call to display a web page when the user visits the path. If omitted, the parent menu item's callback will be used instead.
+ * "page arguments": An array of arguments to pass to the page callback function. Integer values pass the corresponding URL component (see arg()).
+ * "access callback": A function returning a boolean value that determines whether the user has access rights to this menu item. Defaults to user_access() unless a value is inherited from a parent menu item..
+ * "access arguments": An array of arguments to pass to the access callback function. Integer values pass the corresponding URL component.
+ * "file": A file that will be included before the callbacks are accessed; this allows callback functions to be in separate files. The file should be relative to the implementing module's directory unless otherwise specified by the "file path" option.
+ * "file path": The path to the folder containing the file specified in "file". This defaults to the path to the module implementing the hook.
+ * "weight": An integer that determines relative position of items in the menu; higher-weighted items sink. Defaults to 0. When in doubt, leave this alone; the default alphabetical order is usually best.
+ * "menu_name": Optional. Set this to a custom menu if you don't want your item to be placed in Navigation.
+ * "type": A bitmask of flags describing properties of the menu item. Many shortcut bitmasks are provided as constants in menu.inc:
+ *          MENU_NORMAL_ITEM: Normal menu items show up in the menu tree and can be moved/hidden by the administrator.
+ *          MENU_CALLBACK: Callbacks simply register a path so that the correct function is fired when the URL is accessed.
+ *          MENU_SUGGESTED_ITEM: Modules may "suggest" menu items that the administrator may enable.
+ *          MENU_LOCAL_TASK: Local tasks are rendered as tabs by default.
+ *          MENU_DEFAULT_LOCAL_TASK: Every set of local tasks should provide one "default" task, that links to the same path as its parent when clicked.
+ * If the "type" key is omitted, MENU_NORMAL_ITEM is assumed.
+ */
+       
+function asce_summit_menu() {
+	$items['summit'] = array(
+	  'title' => t('CI Annual Summit'),
+	  'page callback' => 'asce_summit_main',
+	  'access callback' => TRUE,
+	  'type' => MENU_CALLBACK,
+	  'file' => 'asce_summit.pages.inc',
+	  'menu_name' => 'asce_summit',
+	);
+	$items['summit/view'] = array(
+    'title' => t('CI Annual Summit'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+	  'weight' => -2,
+  );
+	$items['summit/administer'] = array(
+    'title' => t('Administer'),
+    'page callback' => 'asce_summit_administer',
+    'access arguments' => array('administer ci summit'),
+	  'type' => MENU_LOCAL_TASK,
+    'file' => 'asce_summit.pages.inc',
+	  'menu_name' => 'asce_summit',
+  );
+  $items['summit/session/submit'] = array(
+    'title' => t('Propose a Session'),
+    'page callback' => 'asce_summit_propose_session',
+    'access callback' => TRUE, //'node_access',
+    //'access arguments' => array('create', 'asce-summit-session'),
+    'type' => MENU_CALLBACK,
+    'file' => 'asce_summit.pages.inc',
+    'menu_name' => 'asce_summit',
+  );
+  $items['summit/reg'] = array(
+    'title' => t('Registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_register'),
+    'access callback' => 'user_register_access',
+    'type' => MENU_CALLBACK,
+    'menu_name' => 'asce_summit',
+  );
+	return $items;
+}
+
+function asce_summit_perm() {
+	return array('administer ci summit');
+}
+
+function asce_summit_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'user_register' && arg(0) == 'summit') {
+    // Override the user settings for account creation
+    drupal_set_message('override');
+    if ($form['account']['pass']['#description'] == t('To change the current user password, enter the new password in both fields.')) {
+      // Do nothing
+    }
+    else {
+      $form['account']['pass'] = array(
+      '#type' => 'password_confirm',
+      '#description' => t('Provide a password for the new account in both fields.'),
+      '#required' => TRUE,
+      '#size' => 25,
+      );
+    }
+    $form['#submit'] = array();
+    $form['#submit'][] = 'asce_summit_register_submit';
+  }
+  
+  if ($form_id == 'ci_summit_session_node_form') {
+  	$form['attachments']['#access'] = FALSE;
+  	$form['body_field']['format']['#access'] = FALSE;
+  	$form['#submit'] = array();
+  	$form['#submit'][] = 'asce_summit_node_form_submit';
+  }
+}
+
+function asce_summit_node_info() {
+	return array( 
+	  'ci_summit_session' => array(
+	    'name' => t('CI Summit Session Proposal'),
+	    'module' => 'node',
+	    'description' => 'Proposal to do a session at the CI Summit',
+	    'has_title' => TRUE,
+	    'title_label' => t('Title'),
+	    'has_body' => TRUE,
+	    'body_label' => t('Summary'),
+	    'locked' => TRUE,
+	  ),
+	);
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function asce_summit_form($node) {
+	drupal_set_title('Submit a Session Proposal');
+  // Get metadata for this node type
+  // (we use it for labeling title and body fields).
+  // We defined this in joke_node_info().
+  $type = node_get_types('type', $node);
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => check_plain($type->title_label),
+    '#required' => TRUE,
+    '#default_value' => $node->title,
+    '#weight' => -5,
+    '#maxlength' => 255,
+  );
+  $form['body_filter']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => check_plain($type->body_label),
+    '#default_value' => $node->body,
+    '#rows' => 7,
+    '#required' => TRUE
+  );
+  $form['body_filter']['filter'] = filter_form($node->format);
+  return $form;
+}
+
+/**
+ * Form builder; The user registration form.
+ *
+ * @ingroup forms
+ * @see user_register_validate()
+ * @see user_register_submit()
+ */
+function asce_summit_register(&$form_state) {
+  global $user;
+  $admin = user_access('administer users');
+
+  // If we aren't admin but already logged on, go to the user page instead.
+  if (!$admin && $user->uid) {
+    drupal_goto('user/'. $user->uid);
+  }
+
+  $form = array();
+  
+  // Display the registration form.
+  if (!$admin) {
+    $form['user_registration_help'] = array(
+      '#value' => filter_xss_admin(variable_get('user_registration_help', '')),
+      // Ensure that user registration help appears above profile fields.
+      '#weight' => -20,
+    );
+  }
+
+  // Merge in the default user edit fields.
+  $form = array_merge($form, user_edit_form($form_state, NULL, NULL, TRUE));
+  if ($admin) {
+    $form['account']['notify'] = array(
+     '#type' => 'checkbox',
+     '#title' => t('Notify user of new account')
+    );
+    // Redirect back to page which initiated the create request;
+    // usually admin/user/user/create.
+    $form['destination'] = array('#type' => 'hidden', '#value' => $_GET['q']);
+  }
+
+  // Create a dummy variable for pass-by-reference parameters.
+  $null = NULL;
+  $extra = _user_forms($null, NULL, NULL, 'register');
+
+  // Remove form_group around default fields if there are no other groups.
+  if (!$extra) {
+    foreach (array('name', 'mail', 'pass', 'status', 'roles', 'notify') as $key) {
+      if (isset($form['account'][$key])) {
+        $form[$key] = $form['account'][$key];
+      }
+    }
+    unset($form['account']);
+  }
+  else {
+    $form = array_merge($form, $extra);
+  }
+
+  if (variable_get('configurable_timezones', 1)) {
+    // Override field ID, so we only change timezone on user registration,
+    // and never touch it on user edit pages.
+    $form['timezone'] = array(
+      '#type' => 'hidden',
+      '#default_value' => variable_get('date_default_timezone', NULL),
+      '#id' => 'edit-user-register-timezone',
+    );
+
+    // Add the JavaScript callback to automatically set the timezone.
+    drupal_add_js('
+// Global Killswitch
+if (Drupal.jsEnabled) {
+  $(document).ready(function() {
+    Drupal.setDefaultTimezone();
+  });
+}', 'inline');
+  }
+
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Create new account'), '#weight' => 30);
+  $form['#validate'][] = 'register_validate';
+  $form['#submit'][] = 'asce_summit_register_submit';
+  
+  if (module_exists('logintoboggan')) {
+  	// Admin created accounts are only validated by the module.
+  	if (user_access('administer users')) {
+  		$form['#validate'][] = 'logintoboggan_user_register_validate';
+  		break;
+  	}
+  	$mail = variable_get('logintoboggan_confirm_email_at_registration', 0);
+  	$pass = !variable_get('user_email_verification', TRUE);
+
+  	// Ensure a valid submit array.
+  	$form['#submit'] = is_array($form['#submit']) ? $form['#submit'] : array();
+
+  	// Replace core's registration function with LT's registration function.
+  	// Put the LT submit handler first, so other submit handlers have a valid
+  	// user to work with upon registration.
+  	$key = array_search('user_register_submit', $form['#submit']);
+  	if ($key !== FALSE) {
+  		unset($form['#submit'][$key]);
+  	}
+  	array_unshift($form['#submit'],'logintoboggan_user_register_submit');
+
+  	if ($mail || $pass) {
+  		$form['#validate'][] = 'logintoboggan_user_register_validate';
+
+  		//Display a confirm e-mail address box if option is enabled.
+  		if ($mail) {
+  			// Make sure user help is at the top of the form.
+  			$form['user_registration_help']['#weight'] = -100;
+
+  			$form['conf_mail'] = array('#type' => 'textfield',
+            '#title' => t('Confirm e-mail address'),
+            '#weight' => -28,
+            '#maxlength' => 64,
+            '#description' => t('Please re-type your e-mail address to confirm it is accurate.'),
+            '#required' => TRUE,
+  			);
+
+  			// Weight things properly so that the order is name, mail, conf_mail, then pass
+  			if (isset($form['account'])) {
+  				$form['account']['#weight'] = -50;  // Make sure account form group is at the top of the display.
+  				$form['account']['name']['#weight'] = -30;
+  				$form['account']['mail']['#weight'] = -29;
+  				$form['account']['conf_mail'] = $form['conf_mail'];
+  				unset($form['conf_mail']);
+  				$form['account']['conf_mail']['#weight'] = -28;
+  			}
+  			else {
+  				$form['name']['#weight'] = -30;
+  				$form['mail']['#weight'] = -29;
+  			}
+  		}
+  		$min_pass = variable_get('logintoboggan_minimum_password_length', 0);
+  		if ($pass && $min_pass > 0) {
+  			$description = t('Please choose a password for your account; it must be at least %length characters.', array('%length' => $min_pass));
+  			if (isset($form['account'])) {
+  				$form['account']['pass']['#description'] = $description;
+  			}
+  			else {
+  				$form['pass']['#description'] = $description;
+  			}
+  		}
+  	}
+  }
+
+  return $form;
+}
+
+function asce_summit_register_submit($form, &$form_state) {
+  asce_summit_logintoboggan_user_register_submit($form, &$form_state);
+  $form_state['redirect'] = 'summit';
+  drupal_goto('summit/session/submit');
+}
+
+/**
+ * Custom submit function for student registration from student days page
+ *
+ * @ingroup logintoboggan_form
+ */
+function asce_summit_logintoboggan_user_register_submit($form, &$form_state) {
+	drupal_set_message('in asce_summit');
+
+  $reg_pass_set = TRUE;
+
+  // Test here for a valid pre-auth -- if the pre-auth is set to the auth user, we
+  // handle things a bit differently.
+  $pre_auth = logintoboggan_validating_id() != DRUPAL_AUTHENTICATED_RID;
+
+  // If we are allowing user selected passwords then skip the auto-generate function
+  // The new user's status should default to the site settings, unless reg_passwd_set == 1
+  // (immediate login, we are going to assign a pre-auth role), and we want to allow
+  // admin approval accounts access to the site.
+  if ($reg_pass_set) {
+    $pass = $form_state['values']['pass'];
+    $status = 1;
+  }
+  else {
+    $pass = user_password();
+    $status = variable_get('user_register', 1) == 1;
+  }
+
+  // Must unset mail confirmation to prevent it from being saved in the user table's 'data' field.
+  if (isset($form_state['values']['conf_mail'])) { unset($form_state['values']['conf_mail']); }
+
+  if (array_intersect(array_keys($form_state['values']), array('uid', 'roles', 'init', 'session', 'status'))) {
+    watchdog('security', 'Detected malicious attempt to alter protected user fields.', array(), WATCHDOG_WARNING);
+    $form_state['redirect'] = 'summit';
+    return;
+  }
+
+  // The unset below is needed to prevent these form values from being saved as user data.
+  unset($form_state['values']['form_token'], $form_state['values']['submit'], $form_state['values']['op'], $form_state['values']['notify'], $form_state['values']['form_id'], $form_state['values']['form_build_id'], $form_state['values']['affiliates'], $form_state['values']['destination']);
+
+  // Set the roles for the new user -- add the pre-auth role if they can pick their own password,
+  // and the pre-auth role isn't anon or auth user.
+  $validating_id = logintoboggan_validating_id();
+  $form_state['values']['roles'] = array(2 => 'authenticated user', 10 => 'Student');
+  $roles = isset($form_state['values']['roles']) ? array_filter($form_state['values']['roles']) : array();
+  if ($reg_pass_set && ($validating_id > DRUPAL_AUTHENTICATED_RID)) {
+    $roles[$validating_id] = 1;
+  }
+
+  $edit = array_merge($form_state['values'], array('pass' => $pass, 'init' => $form_state['values']['mail'], 'roles' => $roles, 'status' => $status));
+  $account = user_save('', $edit);
+  // Add plain text password into user account to generate mail tokens.
+  $account->password = $pass;
+  $form_state['user'] = $account;
+
+  watchdog('user', 'New user: %name (%email).', array('%name' => $account->name, '%email' => $account->mail), WATCHDOG_NOTICE, l(t('edit'), 'user/'. $account->uid .'/edit'));
+
+  $login_url = variable_get('user_register', 1) == 1 ? logintoboggan_eml_validate_url($account) : NULL;
+
+  // Compose the appropriate user message--admin approvals don't require a validation email.
+  if($reg_pass_set) {
+    if ($pre_auth) {
+      $message = t('A validation e-mail has been sent to your e-mail address. In order to gain full access to the site, you will need to follow the instructions in that message.');
+    }
+    else {
+      $message = '';
+    }
+  } else {
+    $message = t('Your password and further instructions have been sent to your e-mail address.');
+  }
+
+  // Create new user account, no administrator approval required.
+  $mailkey = 'register_no_approval_required';
+
+  // Mail the user.
+  //_logintoboggan_mail_notify($mailkey, $account, $login_url);
+
+  //drupal_set_message($message);
+
+  // where do we need to redirect after registration?
+  $redirect['path'] = 'summit/session/submit';
+  $form_state['redirect'] = asce_summit_logintoboggan_process_login($account, $edit, $redirect);
+}
+
+/**
+ * Actually log the user on
+ *
+ * @param object $account
+ *   The user object.
+ * @param array $edit
+ *   An array of form values if a form has been submitted.
+ * @param array $redirect
+ *   An array of key/value pairs describing a redirect location, in the form
+ *   that drupal_goto() will understand. Defaults to:
+ *     'path' => 'user/'. $user->uid
+ *     'query' => NULL
+ *     'fragment' => NULL
+ */
+
+function asce_summit_logintoboggan_process_login($account, $edit, $redirect = array()){
+  global $user;
+  drupal_set_message('done!');
+  $user = user_load($account->uid);
+
+  // Call core's function to finalize the login.
+  user_authenticate_finalize($edit);
+
+  if (isset($redirect['path']) && $redirect['path'] != '') {
+    return $redirect;
+  }
+}
+
+function asce_summit_mail($key, &$message, $params) {
+	$node = $params['node'];
+	$account = user_load($node->uid);
+	switch ($key) {
+		case 'session-submitted':
+			$message['subject'] = t('We have received @title', array('@title' => $node->title));
+			$body = 'Thank you for submitting @title. It has now been registered and will be reviewed by the committee and you will be notified in the next few weeks.';
+			$body .= 'This is an automated e-mail please do not reply.';
+			$message['body'] = t($body, array('@title' => $node->title));
+			break;
+		case 'session-submitted-notify':
+      $message['subject'] = t('A session was submitted @title', array('@title' => $node->title));
+      $body = 'Session @title was submitted by @user on ' . format_date(time()) . '.';
+      $body .= '@summary';
+      $message['body'] = t($body, array('@title' => $node->title, '@user' => $account->mail, '@summary' => $node->body));
+      break;	
+	}
+}

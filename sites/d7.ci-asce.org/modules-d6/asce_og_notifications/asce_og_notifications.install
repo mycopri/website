@@ -1,0 +1,10 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function asce_og_notifications_install() {
+  db_query("UPDATE {system} SET weight = 100 WHERE name = 'asce_og_notifications'");
+}
+

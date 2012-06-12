@@ -1,0 +1,18 @@
+$Id: CHANGELOG.txt,v 1.1.2.6 2009/12/04 22:51:00 nonsie Exp $
+
+DRUPAL-6, 2009-12-04
+#463034 - upgrade to Domain Access 2.x version
+#585168 - redirect to the node user was viewing rather than home page
+
+DRUPAL-6, 2009-12-03
+#399004 - expose ability to return # of users per domain
+
+DRUPAL-6, 2008-10-17
+--------------------
+#322878 - fixes a bug introduced by the previously committed patch in this issue
+#338285 - avoid checking for user default domain on domain geolocalization and domain user default module callback urls
+
+DRUPAL-6, 2008-10-17
+--------------------
+- Added additional options for modifying the $user object on
+  non-redirected paths.

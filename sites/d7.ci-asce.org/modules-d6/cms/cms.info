@@ -1,0 +1,9 @@
+; $Id$
+name = Conference Management System
+description = "A conference management system."
+core = 6.x
+package = ASCE-CI
+dependencies[] = abstract
+dependencies[] = messaging
+dependencies[] = messaging_mail
+dependencies[] = messaging_privatemsg

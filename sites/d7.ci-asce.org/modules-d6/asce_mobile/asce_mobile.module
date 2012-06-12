@@ -1,0 +1,347 @@
+<?php
+// $Id$
+
+function asce_mobile_menu() {
+  module_load_include('inc', 'user');
+  module_load_include('module', 'user');
+	$items['admin/settings/asce-mobile'] = array(
+    'title' => 'ASCE Mobile Tools',
+    'description' => t('Configure ASCE mobile tools.'),
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_mobile_configuration_form'),
+	  'file' => 'asce_mobile.admin.inc',
+  );
+  $items['admin/settings/asce-mobile/settings'] = array(
+    'title' => 'Settings',
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_mobile_configuration_form'),
+    'file' => 'asce_mobile.admin.inc',
+    'weight' => -10
+  );
+  $items['admin/settings/asce-mobile/actions'] = array(
+    'title' => 'Actions',
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'asce_mobile_view',
+    'file' => 'asce_mobile.admin.inc',
+    'weight' => -9,
+  );
+  $items['admin/settings/asce-mobile/create'] = array(
+    'title' => 'Create action',
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_mobile_form'),
+    'file' => 'asce_mobile.admin.inc',
+    'weight' => -7
+    );
+  $items['admin/settings/asce-mobile/edit/%asce_mobile'] = array(
+    'title' => 'Edit action record',
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_mobile_form', 4),
+    'file' => 'asce_mobile.admin.inc',
+  );
+  $items['admin/settings/asce-mobile/delete/%asce_mobile'] = array(
+    'title' => 'Delete action record',
+    'access arguments' => array('configure ASCE Mobile Tools'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('asce_mobile_delete_form', 4),
+    'file' => 'asce_mobile.admin.inc',
+  );
+  $items['login'] = array(
+    'title' => 'Log in',
+    'access callback' => 'user_is_anonymous',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_login_block'), 
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function asce_mobile_form_alter(&$form, &$form_state, $form_id) {
+	global $base_url;
+  if(($form_id == 'user_login_block') && ($_SESSION['mobile-tools-mobile-device'] != 'desktop')) {
+  	//drupal_set_message('We are in!');
+  	unset($form['#action']);
+  	$form['#submit'] = array('asce_mobile_user_login_submit');
+  }	
+  //drupal_set_message($form_id . kpr($form, TRUE));
+}
+
+function asce_mobile_perm() {
+	  return array('configure ASCE Mobile Tools');
+}
+
+function asce_mobile_actions_form() {
+  global $base_url;
+  $form['asce_mobile_actions'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable automatic redirection of the mobile user'),
+    '#default_value' => variable_get('asce_mobile_redirect', FALSE),
+    '#description' => 'Mobile visitors will automatically be redirected to the mobile site. But mobile users can also -- if they prefer --
+    view the desktop version. In order to do so, append ?nomobil=true to the URL. The module
+    will set a cookie that remembers that the user does not want to be redirected. To undo, send the user to /gomobile. The module will redirect
+    the user to the mobile site and reset the cookie!',
+  );
+  return system_settings_form($form);
+}
+
+/**
+ *  Implementation of hook_boot().
+ */
+function asce_mobile_boot() {
+	global $_SESSION;
+
+	if (!variable_get('asce_mobile_redirect', 0)) {
+		return;
+	}
+	$device = _asce_mobile_is_mobile_device();
+	$_SESSION['mobile-tools-mobile-device'] = $device['type'];
+	asce_mobile_clear_page_cache();
+}
+
+function asce_mobile_clear_page_cache() {
+	global $_SESSION, $base_root;
+	$internal_path = $base_root . request_uri();
+    cache_clear_all($internal_path, 'cache_page', TRUE);
+	//drupal_set_message('<pre>' . print_r($_SESSION['mobile-tools-mobile-device'], TRUE) . '</pre>');
+	if ($_SESSION['mobile-tools-mobile-device'] != 'desktop') {
+		// Clear the page cache
+		$internal_path = $base_root . request_uri();
+    cache_clear_all($internal_path, 'cache_page', TRUE);
+  }
+}
+
+function asce_mobile_init() {
+	global $custom_theme, $conf, $_SESSION;;
+  
+  if (request_uri() == '/cron.php') {
+  	return;
+  }	
+  
+	if (!variable_get('asce_mobile_redirect', 0)) {
+    return;
+  }
+  if ($_SESSION['mobile-tools-mobile-device'] != 'desktop') {
+  	// drupal_set_message('Browsing from a mobile device.');
+  	// we change this so that no matter what, the theme will change to a mobile theme
+  	// if the user is viewing from a mobile device
+  	$custom_theme = 'copriMobileGarland';
+  	$conf['theme_default'] = 'copriMobileGarland';
+  	module_invoke('domain_theme', 'init');
+  	// We want to rewrite the url for any user viewing from a mobile device to be prefixed with m/
+  	// make sure that polls are not mobilized
+  	$node = node_load(arg(1));
+  	$poll = array('results', 'votes', 'electoral_list', 'remove', 'writeins');
+  	$poll_types = array('advpoll_binary', 'advpoll_ranking');
+  	if (in_array(arg(2), $poll)) {
+  	  $is_poll = TRUE;
+  	}
+  	if (in_array($node->type, $poll_types)) {
+  	  $is_poll_type = TRUE;
+  	}
+  	
+  	if (arg(0) != 'm' && arg(0) == 'node' && !isset($_GET['mobile']) && !$is_poll && !$is_poll_type && arg(0) != 'cron.php') {
+  		$uri = request_uri() == '/' ? '/node/119' : request_uri();
+  	  $mobile_uri = 'm' . $uri;
+  	  asce_mobile_redirection($mobile_uri);
+  	}
+  	
+//  	$sql = "SELECT * FROM asce_mobile";
+//  	$results = db_query($sql);
+//  	if (mysql_num_rows($results) > 0) {
+//  		while ($row = db_fetch_object($results)) {
+//  			if ($_GET['q'] == drupal_get_normal_path($row->url)) {
+//  				if (!empty($row->redirect_to)) {
+//  					asce_mobile_redirection($row->redirect_to);
+//  				}
+//  			}
+//  		}
+//  	}
+  }
+}
+
+/**
+ *  Implementation of hook_is_mobile_device()
+ */ 
+function _asce_mobile_is_mobile_device() {
+  $mobile_browser   = array('type' => 'desktop', 'group' => ''); // set mobile browser as FALSE till we can prove otherwise
+  if (array_key_exists('HTTP_USER_AGENT', $_SERVER)) {
+      $user_agent = $_SERVER['HTTP_USER_AGENT']; 
+    } else {
+      return FALSE;
+    }
+    // get the content accept value
+    // FIXME: this should be cleaned to ensure no nefarious input gets executed
+    if (array_key_exists('HTTP_ACCEPT', $_SERVER)) {
+      $accept = $_SERVER['HTTP_ACCEPT'];
+    } else {
+      $accept = '';
+    }
+  
+  switch (TRUE) { 
+    case (FALSE !== stripos($user_agent, 'ipod')); // we find the words iphone or ipod in the user agent
+      $mobile_browser = array('type' => 'mobile', 'group' => 'ipod'); // mobile browser is either TRUE or FALSE depending on the setting of iphone when calling the function
+    break; // break out and skip the rest if we've had a match on the iphone or ipod
+    case (FALSE !== stripos($user_agent, 'iphone')); // we find the words iphone or ipod in the user agent
+      $mobile_browser = array('type' => 'mobile', 'group' => 'iphone');
+    break;
+    case (FALSE !== stripos($user_agent, 'android'));  // we find android in the user agent
+      $mobile_browser = array('type' => 'mobile', 'group' => 'android');; // mobile browser is either TRUE or FALSE depending on the setting of android when calling the function
+    break; // break out and skip the rest if we've had a match on android
+    case (FALSE !== stripos($user_agent, 'opera mini')); // we find opera mini in the user agent
+      $mobile_browser = array('type' => 'mobile', 'group' => 'opera_mini'); // mobile browser is either TRUE or FALSE depending on the setting of opera when calling the function
+    break; // break out and skip the rest if we've had a match on opera
+    case (FALSE !== stripos($user_agent, 'blackberry')); // we find blackberry in the user agent
+      $mobile_browser = array('type' => 'mobile', 'group' => 'blackberry'); // mobile browser is either TRUE or FALSE depending on the setting of blackberry when calling the function
+    break; // break out and skip the rest if we've had a match on blackberry
+    case (preg_match('/(up.browser|up.link|mmp|symbian|smartphone|midp|wap|vodafone|o2|pocket|kindle|mobile|pda|psp|treo)/i',$user_agent)); // check if any of the values listed create a match on the user agent - these are some of the most common terms used in agents to identify them as being mobile devices - the i at the end makes it case insensitive
+      $mobile_browser = array('type' => 'mobile', 'group' => ''); // set mobile browser to TRUE
+    break; // break out and skip the rest if we've preg_match on the user agent returned TRUE 
+    case ((strpos($accept,'text/vnd.wap.wml')>0)||(strpos($accept,'application/vnd.wap.xhtml+xml')>0)); // is the device showing signs of support for text/vnd.wap.wml or application/vnd.wap.xhtml+xml
+      $mobile_browser = array('type' => 'mobile', 'group' => ''); // set mobile browser to TRUE
+    break; // break out and skip the rest if we've had a match on the content accept headers
+    case (isset($_SERVER['HTTP_X_WAP_PROFILE'])||isset($_SERVER['HTTP_PROFILE'])); // is the device giving us a HTTP_X_WAP_PROFILE or HTTP_PROFILE header - only mobile devices would do this
+      $mobile_browser = array('type' => 'mobile', 'group' => ''); // set mobile browser to TRUE
+    break; // break out and skip the final step if we've had a return TRUE on the mobile specfic headers
+    case (in_array(strtolower(substr($user_agent,0,4)),array('1207'=>'1207','3gso'=>'3gso','4thp'=>'4thp','501i'=>'501i','502i'=>'502i','503i'=>'503i','504i'=>'504i','505i'=>'505i','506i'=>'506i','6310'=>'6310','6590'=>'6590','770s'=>'770s','802s'=>'802s','a wa'=>'a wa','acer'=>'acer','acs-'=>'acs-','airn'=>'airn','alav'=>'alav','asus'=>'asus','attw'=>'attw','au-m'=>'au-m','aur '=>'aur ','aus '=>'aus ','abac'=>'abac','acoo'=>'acoo','aiko'=>'aiko','alco'=>'alco','alca'=>'alca','amoi'=>'amoi','anex'=>'anex','anny'=>'anny','anyw'=>'anyw','aptu'=>'aptu','arch'=>'arch','argo'=>'argo','bell'=>'bell','bird'=>'bird','bw-n'=>'bw-n','bw-u'=>'bw-u','beck'=>'beck','benq'=>'benq','bilb'=>'bilb','blac'=>'blac','c55/'=>'c55/','cdm-'=>'cdm-','chtm'=>'chtm','capi'=>'capi','comp'=>'comp','cond'=>'cond','craw'=>'craw','dall'=>'dall','dbte'=>'dbte','dc-s'=>'dc-s','dica'=>'dica','ds-d'=>'ds-d','ds12'=>'ds12','dait'=>'dait','devi'=>'devi','dmob'=>'dmob','doco'=>'doco','dopo'=>'dopo','el49'=>'el49','erk0'=>'erk0','esl8'=>'esl8','ez40'=>'ez40','ez60'=>'ez60','ez70'=>'ez70','ezos'=>'ezos','ezze'=>'ezze','elai'=>'elai','emul'=>'emul','eric'=>'eric','ezwa'=>'ezwa','fake'=>'fake','fly-'=>'fly-','fly_'=>'fly_','g-mo'=>'g-mo','g1 u'=>'g1 u','g560'=>'g560','gf-5'=>'gf-5','grun'=>'grun','gene'=>'gene','go.w'=>'go.w','good'=>'good','grad'=>'grad','hcit'=>'hcit','hd-m'=>'hd-m','hd-p'=>'hd-p','hd-t'=>'hd-t','hei-'=>'hei-','hp i'=>'hp i','hpip'=>'hpip','hs-c'=>'hs-c','htc '=>'htc ','htc-'=>'htc-','htca'=>'htca','htcg'=>'htcg','htcp'=>'htcp','htcs'=>'htcs','htct'=>'htct','htc_'=>'htc_','haie'=>'haie','hita'=>'hita','huaw'=>'huaw','hutc'=>'hutc','i-20'=>'i-20','i-go'=>'i-go','i-ma'=>'i-ma','i230'=>'i230','iac'=>'iac','iac-'=>'iac-','iac/'=>'iac/','ig01'=>'ig01','im1k'=>'im1k','inno'=>'inno','iris'=>'iris','jata'=>'jata','java'=>'java','kddi'=>'kddi','kgt'=>'kgt','kgt/'=>'kgt/','kpt '=>'kpt ','kwc-'=>'kwc-','klon'=>'klon','lexi'=>'lexi','lg g'=>'lg g','lg-a'=>'lg-a','lg-b'=>'lg-b','lg-c'=>'lg-c','lg-d'=>'lg-d','lg-f'=>'lg-f','lg-g'=>'lg-g','lg-k'=>'lg-k','lg-l'=>'lg-l','lg-m'=>'lg-m','lg-o'=>'lg-o','lg-p'=>'lg-p','lg-s'=>'lg-s','lg-t'=>'lg-t','lg-u'=>'lg-u','lg-w'=>'lg-w','lg/k'=>'lg/k','lg/l'=>'lg/l','lg/u'=>'lg/u','lg50'=>'lg50','lg54'=>'lg54','lge-'=>'lge-','lge/'=>'lge/','lynx'=>'lynx','leno'=>'leno','m1-w'=>'m1-w','m3ga'=>'m3ga','m50/'=>'m50/','maui'=>'maui','mc01'=>'mc01','mc21'=>'mc21','mcca'=>'mcca','medi'=>'medi','meri'=>'meri','mio8'=>'mio8','mioa'=>'mioa','mo01'=>'mo01','mo02'=>'mo02','mode'=>'mode','modo'=>'modo','mot '=>'mot ','mot-'=>'mot-','mt50'=>'mt50','mtp1'=>'mtp1','mtv '=>'mtv ','mate'=>'mate','maxo'=>'maxo','merc'=>'merc','mits'=>'mits','mobi'=>'mobi','motv'=>'motv','mozz'=>'mozz','n100'=>'n100','n101'=>'n101','n102'=>'n102','n202'=>'n202','n203'=>'n203','n300'=>'n300','n302'=>'n302','n500'=>'n500','n502'=>'n502','n505'=>'n505','n700'=>'n700','n701'=>'n701','n710'=>'n710','nec-'=>'nec-','nem-'=>'nem-','newg'=>'newg','neon'=>'neon','netf'=>'netf','noki'=>'noki','nzph'=>'nzph','o2 x'=>'o2 x','o2-x'=>'o2-x','opwv'=>'opwv','owg1'=>'owg1','opti'=>'opti','oran'=>'oran','p800'=>'p800','pand'=>'pand','pg-1'=>'pg-1','pg-2'=>'pg-2','pg-3'=>'pg-3','pg-6'=>'pg-6','pg-8'=>'pg-8','pg-c'=>'pg-c','pg13'=>'pg13','phil'=>'phil','pn-2'=>'pn-2','ppc;'=>'ppc;','pt-g'=>'pt-g','palm'=>'palm','pana'=>'pana','pire'=>'pire','pock'=>'pock','pose'=>'pose','psio'=>'psio','qa-a'=>'qa-a','qc-2'=>'qc-2','qc-3'=>'qc-3','qc-5'=>'qc-5','qc-7'=>'qc-7','qc07'=>'qc07','qc12'=>'qc12','qc21'=>'qc21','qc32'=>'qc32','qc60'=>'qc60','qci-'=>'qci-','qwap'=>'qwap','qtek'=>'qtek','r380'=>'r380','r600'=>'r600','raks'=>'raks','rim9'=>'rim9','rove'=>'rove','s55/'=>'s55/','sage'=>'sage','sams'=>'sams','sc01'=>'sc01','sch-'=>'sch-','scp-'=>'scp-','sdk/'=>'sdk/','se47'=>'se47','sec-'=>'sec-','sec0'=>'sec0','sec1'=>'sec1','semc'=>'semc','sgh-'=>'sgh-','shar'=>'shar','sie-'=>'sie-','sk-0'=>'sk-0','sl45'=>'sl45','slid'=>'slid','smb3'=>'smb3','smt5'=>'smt5','sp01'=>'sp01','sph-'=>'sph-','spv '=>'spv ','spv-'=>'spv-','sy01'=>'sy01','samm'=>'samm','sany'=>'sany','sava'=>'sava','scoo'=>'scoo','send'=>'send','siem'=>'siem','smar'=>'smar','smit'=>'smit','soft'=>'soft','sony'=>'sony','t-mo'=>'t-mo','t218'=>'t218','t250'=>'t250','t600'=>'t600','t610'=>'t610','t618'=>'t618','tcl-'=>'tcl-','tdg-'=>'tdg-','telm'=>'telm','tim-'=>'tim-','ts70'=>'ts70','tsm-'=>'tsm-','tsm3'=>'tsm3','tsm5'=>'tsm5','tx-9'=>'tx-9','tagt'=>'tagt','talk'=>'talk','teli'=>'teli','topl'=>'topl','tosh'=>'tosh','up.b'=>'up.b','upg1'=>'upg1','utst'=>'utst','v400'=>'v400','v750'=>'v750','veri'=>'veri','vk-v'=>'vk-v','vk40'=>'vk40','vk50'=>'vk50','vk52'=>'vk52','vk53'=>'vk53','vm40'=>'vm40','vx98'=>'vx98','virg'=>'virg','vite'=>'vite','voda'=>'voda','vulc'=>'vulc','wapj'=>'wapj','wapp'=>'wapp','wapu'=>'wapu','wapm'=>'wapm','wig '=>'wig ','wapi'=>'wapi','wapr'=>'wapr','wapv'=>'wapv','wapy'=>'wapy','wapa'=>'wapa','waps'=>'waps','wapt'=>'wapt','winc'=>'winc','winw'=>'winw','wonu'=>'wonu','x700'=>'x700','xda2'=>'xda2','xdag'=>'xdag','yas-'=>'yas-','your'=>'your','zte-'=>'zte-','zeto'=>'zeto','acs-'=>'acs-','alav'=>'alav','alca'=>'alca','amoi'=>'amoi','aste'=>'aste','audi'=>'audi','avan'=>'avan','benq'=>'benq','bird'=>'bird','blac'=>'blac','blaz'=>'blaz','brew'=>'brew','brvw'=>'brvw','bumb'=>'bumb','ccwa'=>'ccwa','cell'=>'cell','cldc'=>'cldc','cmd-'=>'cmd-','dang'=>'dang','doco'=>'doco','eml2'=>'eml2','eric'=>'eric','fetc'=>'fetc','hipt'=>'hipt','http'=>'http','ibro'=>'ibro','idea'=>'idea','ikom'=>'ikom','inno'=>'inno','ipaq'=>'ipaq','jbro'=>'jbro','jemu'=>'jemu','java'=>'java','jigs'=>'jigs','kddi'=>'kddi','keji'=>'keji','kyoc'=>'kyoc','kyok'=>'kyok','leno'=>'leno','lg-c'=>'lg-c','lg-d'=>'lg-d','lg-g'=>'lg-g','lge-'=>'lge-','libw'=>'libw','m-cr'=>'m-cr','maui'=>'maui','maxo'=>'maxo','midp'=>'midp','mits'=>'mits','mmef'=>'mmef','mobi'=>'mobi','mot-'=>'mot-','moto'=>'moto','mwbp'=>'mwbp','mywa'=>'mywa','nec-'=>'nec-','newt'=>'newt','nok6'=>'nok6','noki'=>'noki','o2im'=>'o2im','opwv'=>'opwv','palm'=>'palm','pana'=>'pana','pant'=>'pant','pdxg'=>'pdxg','phil'=>'phil','play'=>'play','pluc'=>'pluc','port'=>'port','prox'=>'prox','qtek'=>'qtek','qwap'=>'qwap','rozo'=>'rozo','sage'=>'sage','sama'=>'sama','sams'=>'sams','sany'=>'sany','sch-'=>'sch-','sec-'=>'sec-','send'=>'send','seri'=>'seri','sgh-'=>'sgh-','shar'=>'shar','sie-'=>'sie-','siem'=>'siem','smal'=>'smal','smar'=>'smar','sony'=>'sony','sph-'=>'sph-','symb'=>'symb','t-mo'=>'t-mo','teli'=>'teli','tim-'=>'tim-','tosh'=>'tosh','treo'=>'treo','tsm-'=>'tsm-','upg1'=>'upg1','upsi'=>'upsi','vk-v'=>'vk-v','voda'=>'voda','vx52'=>'vx52','vx53'=>'vx53','vx60'=>'vx60','vx61'=>'vx61','vx70'=>'vx70','vx80'=>'vx80','vx81'=>'vx81','vx83'=>'vx83','vx85'=>'vx85','wap-'=>'wap-','wapa'=>'wapa','wapi'=>'wapi','wapp'=>'wapp','wapr'=>'wapr','webc'=>'webc','whit'=>'whit','winw'=>'winw','wmlb'=>'wmlb','xda-'=>'xda-',))); // check against a list of trimmed user agents to see if we find a match
+       if (!ereg("w3c_css_validator", strtolower($user_agent))) {        
+          $mobile_browser = array('type' => 'mobile', 'group' => ''); // set mobile browser to TRUE
+       }
+    break; // break even though it's the last statement in the switch so there's nothing to break away from but it seems better to include it than exclude it
+  } // ends the switch 
+  
+   $result = $mobile_browser;
+   return $result;
+}
+
+/**
+ * Being called in the hook_boot() implementation
+ * This function is in charge of device detection, redirection or displaying a notification 
+ */ 
+function asce_mobile_redirection($destination = NULL, $theme = NULL) {
+	//drupal_set_message('In asce_mobile_redirection');
+	
+	// Make sure that there is a url and theme
+	if (is_null($destination)) {
+		return;
+	}
+	//$mobile_url = preg_replace('{/$}', '', variable_get('mobile_tools_mobile_url', ''));
+	//$desktop_url = preg_replace('{/$}', '', variable_get('mobile_tools_desktop_url', ''));
+
+	// Checking the possible arguments
+	$session_time = time() + variable_get('mobile_tools_cookie_session', 3600*24*30);
+	
+	if (isset($_GET['nomobile'])) {
+		if (strtolower($_GET['nomobile']) == 'true') {
+			$redirect = 'FALSE';
+			setCookie('mt_redirect', 'false', variable_get('mobile_tools_cookie_lifetime', $session_time) , '/');
+		}
+		elseif (strtolower($_GET['nomobile']) == 'false') {
+			$redirect = 'TRUE';
+			setCookie('mt_redirect', 'true', variable_get('mobile_tools_cookie_lifetime',$session_time) , '/');
+		}
+	}
+	else {
+		// keep cookie if set, else set to true (default)
+		if (!isset($_COOKIE['mt_redirect'])) {
+			$redirect = TRUE;
+			setCookie('mt_redirect', 'true', $session_time, '/' );
+		}
+		else {
+			$redirect = $_COOKIE['mt_redirect'];
+		}
+	}
+
+	// Redirections
+	if ($redirect == 'true') {
+		asce_mobile_goto($destination, $theme);
+	}
+}
+
+function asce_mobile_goto($path = '', $theme = NULL, $query = NULL, $fragment = NULL, $http_response_code = 302) {
+	global $custom_theme;
+	
+  $url = $path;
+  // Make the given path or URL absolute
+  if (!preg_match('/^[a-z]+:\/\//', $url)) {
+    global $base_url;
+    $url = $base_url .'/'. $url;
+  }
+
+  $url .= (empty($query)    ? '' : '?'. $query);
+  $url .= (empty($fragment) ? '' : '#'. $fragment);
+
+  // Remove newlines from the URL to avoid header injection attacks.
+  $url = str_replace(array("\n", "\r"), '', $url);
+
+  // Before the redirect, allow modules to react to the end of the page request.
+  bootstrap_invoke_all('exit');
+
+  // Even though session_write_close() is registered as a shutdown function, we
+  // need all session data written to the database before redirecting.
+  session_write_close();
+  
+  $custom_theme = $theme;
+  module_invoke('domain_theme', 'init');
+  header('Location: '. $url, TRUE, $http_response_code);
+
+  // The "Location" header sends a REDIRECT status code to the http
+  // daemon. In some cases this can go wrong, so we make sure none
+  // of the code below the drupal_goto() call gets executed when we redirect.
+  exit();
+}
+
+function asce_mobile_login_block() {
+	global $base_url;
+  module_load_include('module', 'user');
+  module_load_include('inc', 'user', 'user.pages');
+	$form = array(
+    '#action' => url($base_url . '/node/119'),
+    '#id' => 'user-login-form',
+    '#validate' => user_login_default_validators(),
+    '#submit' => array('user_login_submit'),
+  );
+  $form['name'] = array('#type' => 'textfield',
+    '#title' => t('Username'),
+    '#maxlength' => USERNAME_MAX_LENGTH,
+    '#size' => 15,
+    '#required' => TRUE,
+  );
+  $form['pass'] = array('#type' => 'password',
+    '#title' => t('Password'),
+    '#maxlength' => 60,
+    '#size' => 15,
+    '#required' => TRUE,
+  );
+  $form['submit'] = array('#type' => 'submit',
+    '#value' => t('Log in'),
+  );
+  $items = array();
+  if (variable_get('user_register', 1)) {
+    $items[] = l(t('Create new account'), 'user/register', array('attributes' => array('title' => t('Create a new user account.'))));
+  }
+  $items[] = l(t('Request new password'), 'user/password', array('attributes' => array('title' => t('Request new password via e-mail.'))));
+  $form['links'] = array('#value' => theme('item_list', $items));
+  return $form;
+}
+
+function asce_mobile_user_login_submit($form, &$form_state) {
+  global $user;
+  if ($user->uid) {
+    $form_state['redirect'] = 'node/119';
+    return;
+  }
+}
+
+function asce_mobile_load($mid = NULL) {
+	$sql = "SELECT * FROM asce_mobile WHERE mid=%d";
+	$results = db_query($sql, $mid);
+	return db_fetch_array($results);
+}

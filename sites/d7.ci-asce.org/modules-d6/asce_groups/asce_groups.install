@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function asce_groups_schema() {
+  	
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function asce_groups_uninstall() {
+  // Remove all database tables.
+  drupal_uninstall_schema('asce_groups');
+}
+
+function asce_groups_install() {
+	db_query("UPDATE {system} SET weight = 10 WHERE name = 'asce_groups'");
+}
+
