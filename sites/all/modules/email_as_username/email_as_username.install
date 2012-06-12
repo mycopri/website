@@ -1,0 +1,21 @@
+<?php
+
+/**
+* @file
+* Install, update and uninstall functions for the logintoboggan module.
+*/
+
+/**
+ * Implement hook_disable().
+ *
+ */
+function email_as_user_disable() {
+  
+}
+
+/**
+ * Implement hook_uninstall().
+ */
+function email_as_user_uninstall() {
+  
+}
