@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * @file
+ *  LoginToboggan module
+ *
+ * This module enhances the configuration abilities of Drupal's default login system.
+ */
+
+/**
+ * @todo
+ *
+ */
+
+/**
+ * @wishlist
+ *
+ */
+
+/**
+ * @defgroup logintoboggan_core Core drupal hooks
+ */
+
+function email_as_username_form_alter(&$form, &$form_state, $form_id) {
+  //dpm($form);
+  //dpm($form_state);
+  //dpm($form_id);
+}
+
+function email_as_username_form_user_register_form_alter(&$form, &$form_state, $form_id) {
+  dpm($form_state);
+  dpm($form_id);
+  $form['account']['name']['#access'] = FALSE;
+  $form['account']['name']['#required'] = FALSE;
+  $form['account']['#weight'] = 10;
+  array_unshift($form['#validate'], 'email_as_username_validate');
+  dpm($form);
+}
+
+function email_as_username_validate ($form, &$form_state) {
+  $form_state['values']['name'] = $form_state['values']['mail'];
+  dpm($form_state);
+}
