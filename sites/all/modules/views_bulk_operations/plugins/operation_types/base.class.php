@@ -6,7 +6,6 @@
  */
 
 abstract class ViewsBulkOperationsBaseOperation {
-
   /**
    * The id of the operation.
    *

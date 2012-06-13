@@ -7,7 +7,6 @@
  */
 
 class ViewsBulkOperationsAction extends ViewsBulkOperationsBaseOperation {
-
   /**
    * Contains the options provided by the user in the configuration form.
    *
@@ -157,8 +156,7 @@ class ViewsBulkOperationsAction extends ViewsBulkOperationsBaseOperation {
           $dom_id . '-selected' => array(1),
         ),
       );
-      $settings_dom_id = $dom_id . '-settings';
-      $form['settings'] += $settings_form_callback($settings, $this->entityType, $settings_dom_id);
+      $form['settings'] += $settings_form_callback($settings, $this->entityType);
     }
 
     return $form;
