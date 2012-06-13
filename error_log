@@ -51,3 +51,4 @@
 [12-Jun-2012 13:10:02] PHP Fatal error:  Call to undefined function  dpm() in /home/institut/public_html/drupal7/modules/system/system.module on line 2323
 [12-Jun-2012 13:15:07] PHP Fatal error:  Call to undefined function  dpm() in /home/institut/public_html/drupal7/includes/module.inc on line 151
 [12-Jun-2012 13:20:02] PHP Fatal error:  Call to undefined function  dpm() in /home/institut/public_html/drupal7/modules/system/system.module on line 2323
+[12-Jun-2012 20:52:38] PHP Fatal error:  Call to undefined function  lock_acquire() in /home/institut/public_html/drupal7/includes/bootstrap.inc on line 3106
