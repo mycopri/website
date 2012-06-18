@@ -1,6 +1,0 @@
-- Added custom Panels pane so Skinr styles can be applied to block and panes
-- Added a "clearfix" to the block's content div so content doesn't spill out  
-of it when floated.
-- Updated javascript to use Drupal behaviors in order to avoid conflicts with  
-CiviCRM or other scripts.
-
