@@ -1,9 +1,7 @@
 <?php
 
 function relocate_description_theme_registry_alter(&$theme_registry) {
-  dpm($theme_registry['form_element']);
   $theme_registry['form_element']['function'] = 'theme_relocation_description_form_element';
-  dpm($theme_registry['form_element']);
 }
 
 
