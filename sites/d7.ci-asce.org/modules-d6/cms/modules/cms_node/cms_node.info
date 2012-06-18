@@ -1,6 +1,0 @@
-; $Id$
-name = CMS Node
-description = A special node reserved for the CMS module. Allows nodes to be tied to specific conference pages.
-core = 6.x
-package = ASCE-CI
-

@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Node Edit Update Flage
-description = "Allows user to indicate whether the node should be updated(i.e. when the node is saved, the changed stamp is not updated)."
-core = 6.x
-package = ASCE
-

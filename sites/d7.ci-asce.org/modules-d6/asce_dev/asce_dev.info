@@ -1,6 +1,0 @@
-; $Id$
-name = Marvin Developement Tools
-description = "Automates some of the development site and local site db queries."
-core = 6.x
-package = ASCE
-

@@ -1,5 +1,0 @@
-; $Id$
-name = CI Facebook
-description = "Use Facebook API"
-package = "ASCE - ci"
-core = 6.x

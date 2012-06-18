@@ -1,7 +1,0 @@
-; $Id$
-name = ASCE Student Days Teams
-description = "Fully customizes organic groups for the student days teams."
-core = 6.x
-package = ASCE
-dependencies[] = og
-

@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Video Formatter
-description = "Adds more formats for video nodes in views."
-core = 6.x
-package = ASCE
-dependencies[] = video

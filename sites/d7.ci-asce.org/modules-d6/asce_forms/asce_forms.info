@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Forms
-description = "Uses the URL to change default form values for node creation forms."
-core = 6.x
-package = ASCE
-

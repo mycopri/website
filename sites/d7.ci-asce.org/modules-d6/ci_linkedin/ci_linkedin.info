@@ -1,5 +1,0 @@
-; $Id$
-name = CI LinkedIn
-description = "Use LinkedIn API"
-package = "ASCE - ci"
-core = 6.x

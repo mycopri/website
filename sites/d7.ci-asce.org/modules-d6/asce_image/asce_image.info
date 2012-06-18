@@ -1,7 +1,0 @@
-; $Id$
-name = ASCE Image
-description = "Adds some additional ASCE specific features to the Image module and its contributed modules i.e. Image Attach."
-core = 6.x
-package = ASCE
-dependencies[] = image
-

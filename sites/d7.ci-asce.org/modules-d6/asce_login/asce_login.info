@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Custom Login
-description = "Provides a custom login page"
-core = 6.x
-package = ASCE
-

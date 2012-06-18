@@ -1,6 +1,0 @@
-; $Id$
-name = EMI Customizations
-description = "This module provides some EMI specific modifications and additions specific to the EMI site."
-core = 6.x
-package = ASCE
-

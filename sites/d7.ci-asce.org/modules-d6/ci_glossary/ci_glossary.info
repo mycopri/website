@@ -1,7 +1,0 @@
-; $Id$
-name = CI Glossary
-description = "Online glossary developed by the Younger Members"
-core = 6.x
-package = ASCE - ci
-dependencies[] = taxonomy
-

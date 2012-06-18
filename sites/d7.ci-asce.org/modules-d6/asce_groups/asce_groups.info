@@ -1,6 +1,0 @@
-; $Id$
-name = CI Groups
-description = "Extends Organic Groups for CI Group Pages"
-core = 6.x
-package = ASCE-CI
-

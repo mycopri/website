@@ -1,6 +1,0 @@
-; $Id$
-name = CI Summit
-description = "Provides CI Summit specific features."
-core = 6.x
-package = CI
-

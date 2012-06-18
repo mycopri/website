@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Demo
-description = "A test bed to for testing out functions and debugging."
-core = 6.x
-package = ASCE
-

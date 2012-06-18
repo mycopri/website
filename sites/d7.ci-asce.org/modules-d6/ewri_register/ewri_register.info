@@ -1,6 +1,0 @@
-; $Id$
-name = EWRI Account Creation Mods
-description = "Modifies the account creation process to take the user to a specific page."
-core = 6.x
-package = EWRI
-

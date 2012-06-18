@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Organic Groups Enhancements
-description = Modifies the behavior of OG so that domains are recongnized.
-package = "ASCE"
-dependencies[] = og_notifications
-core = 6.x

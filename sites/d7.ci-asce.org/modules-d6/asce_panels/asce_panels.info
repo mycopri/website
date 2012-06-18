@@ -1,6 +1,0 @@
-; $Id$
-name = ASCE Panels Style Plugins
-description = "Adds additional style plugins for panels."
-core = 6.x
-package = ASCE
-
