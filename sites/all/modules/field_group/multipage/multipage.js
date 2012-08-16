@@ -132,7 +132,7 @@ Drupal.multipageControl.prototype = {
         .val(this.wrapper.attr('id'));
     // Mark the active control for screen readers.
     $('#active-multipage-control').remove();
-    this.nextLink.append('<span id="active-multipage-control" class="element-invisible">' + Drupal.t('(active page)') + '</span>');
+    //this.nextLink.append('<span id="active-multipage-control" class="element-invisible">' + Drupal.t('(active page)') + '</span>');
   },
   
   /**
