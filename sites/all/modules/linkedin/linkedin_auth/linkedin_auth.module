@@ -101,6 +101,7 @@ function linkedin_auth_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_block_info().
  */
 function linkedin_auth_block_info() {
+  dpm(variable_get('linkedin_auth_login_block'));
   if (variable_get('linkedin_auth_login_block', 0) == 1) {
     $blocks['linkedin_auth_login_block'] = array(
       'info' => t('Login using LinkedIn'),
