@@ -1,0 +1,134 @@
+<?php
+/**
+ * @file
+ * Subscriptions to content events
+ */
+
+/**
+ * Implementation of hook_permission()
+ */
+function mo_notifications_content_permission() {
+  return array(
+    'subscribe to content' =>  array(
+      'title' => t('Subscribe to content'),
+      'description' => t('Subscribe to content posted or updated.'),
+    ),
+    'subscribe to content type' =>  array(
+      'title' => t('Subscribe to content type'),
+      'description' => t('Subscribe to all content from a content type.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_trigger_info().
+ */
+function mo_notifications_content_trigger_info() {
+  return array(
+    'node' => array(
+      'node_publish' => array(
+        'label' => t('After content is published, either created public or updated status'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_action_info().
+ */
+function mo_notifications_content_action_info() {
+  return array(
+    'mo_notifications_content_record_event' => array(
+      'type' => 'node',
+      'label' => t('Track node event for notification to group members.'),
+      'configurable' => FALSE,
+      'triggers' => array('node_publish'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_presave().
+ */
+function mo_notifications_content_node_presave($node) {
+  // Basically what we are doing here is "hooking" into the trigger
+  // module. Since we defined a new trigger called "node_publish".
+  _trigger_node($node, 'node_publish');
+}
+
+/**
+ * Sets the status of a node to 1 (published).
+ *
+ * @ingroup actions
+ */
+function mo_notifications_content_record_event($node, $context = array()) {
+  if(!is_null($node->nid)) {
+    $old_node = node_load($node->nid);
+    $node->old_status = $old_node->status;
+  }
+  //watchdog('action', 'Set @type %title to published.', array('@type' => node_type_get_name($node), '%title' => $node->title));
+}
+
+/**
+ * Implementation of hook_node_update().
+ */
+function mo_notifications_content_node_update($node) {
+  // We only want to record group content events
+  if (!_in_group($node)) {
+      dsm('Not group content. Do not record.');
+      return;
+  }
+  if ($node->status) {
+    dsm($node);
+    if ($node->old_status == 0) {
+      dsm('Existing content published. Record event.');
+      dsm(_db_content_event($node, 'publish'));
+      return;
+    }
+    dsm(_db_content_event($node, 'update'));
+    dsm('Content has been updated. Record event.');
+  }
+}
+
+/**
+ * Implementation of hook_node_update().
+ */
+function mo_notifications_content_node_insert($node) {
+  dsm($node);
+  if ($node->status) {
+    dsm('Content added and published. Record event.');
+    dsm(_db_content_event($node, 'create'));
+  }
+  else {
+    dsm('Content was added, but not published. Do not record event.');
+  }
+}
+
+function _in_group($node) {
+  if (count($node->group_audience['und']) > 0) {
+    return TRUE;
+  };
+}
+
+function _db_content_event($node, $event) {
+  $id = db_insert('mo_notifications_content_events')
+        ->fields(array(
+        'nid' => $node->nid,
+        'event' => $event,
+        'created' => REQUEST_TIME,
+        ))
+      ->execute();
+  return $id;
+}
+
+function _send_notification_email() {
+  // We will need to do this step by step, instead of sending an email
+  // I'll concentrate first on just displaying a message and the flow
+  // First step will be to check and see when was the last time an email
+  // was sent to the specific user.
+  global $user;
+  $account = $user;
+  
+  
+  
+}
