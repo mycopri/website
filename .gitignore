@@ -10,3 +10,4 @@ sites/default/settings.php
 cgi-bin/
 /nbproject/private/
 /nbproject
+error_log
