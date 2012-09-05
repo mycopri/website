@@ -11,3 +11,4 @@ cgi-bin/
 /nbproject/private/
 /nbproject
 error_log
+*.sql

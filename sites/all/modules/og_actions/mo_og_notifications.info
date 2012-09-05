@@ -1,0 +1,10 @@
+name = Simple OG Notifications
+description = "Sends activity summaries via email to members of organic groups."
+package = "Organic groups"
+core = 7.x
+
+dependencies[] = trigger
+dependencies[] = rules
+dependencies[] = og
+
+version = "7.x-1.x-dev"

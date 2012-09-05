@@ -1,0 +1,103 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function mo_notifications_content_install() {
+  drupal_install_schema('mo_notifications_content');
+}
+
+/**
+ * Create trigger assignement
+ */
+function mo_notifications_content_install_trigger_action($trigger, $action) {
+  $check = db_select('trigger_assignments', 'ta')
+    ->fields('ta', array('hook', 'aid'))
+    ->condition('hook', $trigger)
+    ->condition('aid', $action)
+    ->execute()
+    ->fetchObject();
+
+  if (!$check) {
+    db_insert('trigger_assignments')
+    ->fields(array(
+      'hook' => $trigger,
+      'aid' => $action,
+    ))
+    ->execute();
+  }
+}
+/**
+ * Implementation of hook_uninstall().
+ */
+function mo_notifications_content_uninstall() {
+  drupal_uninstall_schema('mo_notifications_content');
+}
+
+function mo_notifications_content_schema() {
+  $schema['mo_notifications_content_events'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'nid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'event' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['mo_notifications_content_email'] = array(
+    'description' => 'TODO: please describe this table!',
+    'fields' => array(
+      'id' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'sent' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'subject' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+      ),
+      'body' => array(
+        'description' => 'TODO: please describe this field!',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'uid' => array('uid')
+    ),
+  );
+
+  return $schema;
+}

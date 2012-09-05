@@ -1,0 +1,107 @@
+<?php
+/**
+ * Simpletests for the Queue Mail module.
+ */
+
+/**
+ * Tests queue mail functionality.
+ */
+class QueueMailTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Queuing mail',
+      'description' => 'Test queuing emails using Queue Mail.',
+      'group' => 'Mail',
+    );
+  }
+
+  function setUp() {
+    $modules = func_get_args();
+    if (isset($modules[0]) && is_array($modules[0])) {
+      $modules = $modules[0];
+    }
+    $modules[] = 'queue_mail';
+    $modules[] = 'queue_mail_test';
+    parent::setUp($modules);
+  }
+
+  /**
+   * Test that if we're not queuing any emails that they get sent as normal.
+   */
+  function testNonQueuedEmail() {
+    // Send an email and ensure it was sent immediately.
+    variable_set('queue_mail_keys', '');
+    $content = $this->randomName(32);
+    drupal_mail('queue_mail_test', 'basic', 'info@example.com', language_default(), array('content' => $content));
+    $this->assertMail('body', $content, 'Non-queued email content is sent.');
+  }
+
+  /**
+   * Test that if we are queuing emails, that they get queued.
+   */
+  function testQueuedEmail() {
+    // Test that when we send a queued email it goes into the queue.
+    $queue = _queue_mail_get_queue();
+    $queue_count_before = $queue->numberOfItems();
+    $email_count_before = count($this->drupalGetMails());
+    // Send an email and ensure it was sent immediately.
+    variable_set('queue_mail_keys', 'queue_mail_test*');
+    $content = $this->randomName(32);
+    drupal_mail('queue_mail_test', 'basic', 'info@example.com', language_default(), array('content' => $content));
+    $queue_count_after = $queue->numberOfItems();
+    $email_count_after = count($this->drupalGetMails());
+    $this->assertTrue($queue_count_after - $queue_count_before == 1, 'Email is queued.');
+    $this->assertTrue($email_count_after - $email_count_before == 0, 'Queued email is not sent immediately.');
+
+    // Now run cron and see if our email gets sent.
+    $queue_count_before = $queue->numberOfItems();
+    $email_count_before = count($this->drupalGetMails());
+    $this->cronRun();
+    $this->assertMail('body', $content, 'Queued email content is sent.');
+    $queue_count_after = $queue->numberOfItems();
+    $email_count_after = count($this->drupalGetMails());
+    $this->assertTrue($queue_count_after - $queue_count_before == -1, 'Email is sent from the queue.');
+    $this->assertTrue($email_count_after - $email_count_before == 1, 'Queued email is sent on cron.');
+
+  }
+
+  /**
+   * This tests the matching of mailkeys to be queued.
+   *
+   * For example, we test that a specific email from a module is queued, and
+   * that emails from another module are not queued.
+   */
+  function testQueuedEmailKeyMatching() {
+    // TOOD: Implement.
+  }
+
+  /**
+   * This tests to see if the queued email uses the original email sending framework.
+   */
+  function testQueuedSendingFramework() {
+    // TODO: Implement.
+  }
+
+  /**
+   * Asserts that the most recently sent e-mail message has the given value.
+   *
+   * The field in $name must have the content described in $value.
+   *
+   * @param $name
+   *   Name of field or message property to assert. Examples: subject, body, id, ...
+   * @param $value
+   *   Value of the field to assert.
+   * @param $message
+   *   Message to display.
+   *
+   * @return
+   *   TRUE on pass, FALSE on fail.
+   */
+  protected function assertMail($name, $value = '', $message = '') {
+    $captured_emails = variable_get('drupal_test_email_collector', array());
+    $email = end($captured_emails);
+    return $this->assertTrue($email && isset($email[$name]) && trim($email[$name]) == trim($value), $message, t('E-mail'));
+  }
+
+}

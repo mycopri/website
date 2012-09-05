@@ -176,7 +176,7 @@ function linkedin_get_fields($url, $tokens) {
  */
 function linkedin_put_profile_field($uid, $body, $api = 'shares') {
   module_load_include('inc', 'linkedin');
-  return linkedin_put_profile_field($uid, $body, $api);
+  return _linkedin_put_profile_field($uid, $body, $api);
 }
 
 /**

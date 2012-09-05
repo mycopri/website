@@ -1,0 +1,5 @@
+name = Group Content Notifications
+description = Sends users notifications of new and updated group content via email.
+package = "OG"
+core = 7.x
+version = 7.x-1.x-dev
