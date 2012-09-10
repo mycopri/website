@@ -17,6 +17,10 @@ function og_mail_permission() {
       'title' => t('Subscribe to content type'),
       'description' => t('Subscribe to all content from a content type.'),
     ),
+    'og_mail admin' =>  array(
+      'title' => t('Admin/developer'),
+      'description' => t('For use for testing and development only.'),
+    ),
   );
 }
 
