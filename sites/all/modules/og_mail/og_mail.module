@@ -200,6 +200,10 @@ function _og_mail_send() {
   global $user;
   global $base_url;
   
+  if (!user_access('og_mail admin')) {
+    return;
+  }
+  
   $account = $user;
   $params['account'] = $account;
   drupal_mail('og_mail', 'og_mail', $account->mail, user_preferred_language($account), $params);
