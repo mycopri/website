@@ -32,7 +32,9 @@
   <body id="mimemail-body" <?php if ($key): print 'class="'. $key .'"'; endif; ?>>
     <div id="center">
       <div id="main">
+        <pre>
         <?php print $body ?>
+        </pre>
       </div>
     </div>
   </body>

@@ -312,6 +312,7 @@ function mimemail_rules_action_mail_to_users_of_role_upgrade($element, RulesPlug
  * Implements hook_mail().
  */
 function mimemail_mail($key, &$message, $params) {
+  dsm($message);
   $context = $params['context'];
 
   // Prepare the array of the attachments.
