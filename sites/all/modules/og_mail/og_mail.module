@@ -41,12 +41,15 @@ function og_mail_node_update($node) {
   // Check a few things first:
   // 1) Is this node part of a group?
   // 2) Is the node a new post?
+  dsm($node);
   if (!_node_in_group($node)) {
     return;
-  }  
+  }
+  dsm('Node is in group');
   if (_node_is_new($node)) {
     return;
   }
+  dsm('Node is published');
   if ($node->status) {
     if ($node->old_status == 0) {
       $event_id = _og_mail_save_content_event($node, 'publish');
@@ -56,7 +59,7 @@ function og_mail_node_update($node) {
       $event_id = _og_mail_save_content_event($node, 'update');
       _og_mail_save_mail_queue($node, $event_id);
     }
-    _og_mail_send();
+    //_og_mail_send();
   }
 }
 
@@ -72,7 +75,7 @@ function og_mail_node_insert($node) {
   if ($node->status) {
     $event_id = _og_mail_save_content_event($node, 'create');
     _og_mail_save_mail_queue($node, $event_id);
-    _og_mail_send();
+    //_og_mail_send();
   }
 }
 
@@ -144,6 +147,7 @@ function _og_mail_save_content_event($node, $event) {
  */
 function _og_mail_save_mail_queue($node, $event_id) {
   $users = _get_user_list($node);
+  dsm($users);
   
   // Create an entry for every user in the og_mail
   // table
