@@ -41,25 +41,21 @@ function og_mail_node_update($node) {
   // Check a few things first:
   // 1) Is this node part of a group?
   // 2) Is the node a new post?
-  dsm($node);
   if (!_node_in_group($node)) {
     return;
   }
-  dsm('Node is in group');
-  if (_node_is_new($node)) {
-    return;
-  }
-  dsm('Node is published');
+  $new_node = _node_is_new($node);
+  
   if ($node->status) {
     if ($node->old_status == 0) {
-      $event_id = _og_mail_save_content_event($node, 'publish');
+      $event_id = _og_mail_save_content_event($node, 'node', 'publish');
       _og_mail_save_mail_queue($node, $event_id);
     }
-    else {
-      $event_id = _og_mail_save_content_event($node, 'update');
+    elseif (!$new_node) {
+      $event_id = _og_mail_save_content_event($node, 'node', 'update');
       _og_mail_save_mail_queue($node, $event_id);
     }
-    //_og_mail_send();
+    _og_mail_send();
   }
 }
 
@@ -73,9 +69,26 @@ function og_mail_node_insert($node) {
   }
   
   if ($node->status) {
-    $event_id = _og_mail_save_content_event($node, 'create');
+    $event_id = _og_mail_save_content_event($node, 'node', 'create');
     _og_mail_save_mail_queue($node, $event_id);
-    //_og_mail_send();
+    _og_mail_send();
+  }
+}
+
+/**
+ * Implementation of hook_comment_insert().
+ */
+function og_mail_comment_insert($comment) {
+  $node = node_load($comment->nid);
+  // We only want to record group content events
+  if (!_node_in_group($node)) {
+      return;
+  }
+
+  if ($node->status) {
+    $event_id = _og_mail_save_content_event($comment, 'comment', 'create');
+    _og_mail_save_mail_queue($comment, $event_id);
+    _og_mail_send();
   }
 }
 
@@ -111,26 +124,34 @@ function _node_in_group($node) {
  * @param type $event
  * @return the primary key or id of the event
  */
-function _og_mail_save_content_event($node, $event) {
+function _og_mail_save_content_event($object, $type, $event) {
   // Check to see if this node is already in the table
-  $event_row = db_select('og_mail_events', 'events')
+  $query = db_select('og_mail_events', 'events')
           -> fields('events', array('id', 'nid', 'event'))
-          -> condition('nid', $node->nid, '=')
-          ->execute()
-          ->fetchAssoc();
+          -> condition('nid', $object->nid, '=')
+          -> condition('type', $type, '=');
+  if($type == 'comment') {
+    $query->condition('cid', $object->cid, '=');
+  }
+  
+  $event_row = $query->execute()-> fetchAssoc();
+  
   if (isset($event_row['id'])) {
     db_update('og_mail_events')
           ->fields(array(
             'created' => REQUEST_TIME,
           ))
-          -> condition('nid', $node->nid, '=')
-          ->execute();
+          -> condition('nid', $object->nid, '=')
+          -> condition('type', $type, '=')
+          -> execute();
     $event_id = $event_row['id'];
   }
   else {
     $event_id = db_insert('og_mail_events')
           ->fields(array(
-          'nid' => $node->nid,
+          'nid' => $object->nid,
+          'cid' => isset($object->cid) ? $object->cid : NULL,
+          'type' => $type,
           'event' => $event,
           'created' => REQUEST_TIME,
           ))
@@ -145,9 +166,11 @@ function _og_mail_save_content_event($node, $event) {
  * @param type $event_id
  * @return type
  */
-function _og_mail_save_mail_queue($node, $event_id) {
+function _og_mail_save_mail_queue($object, $event_id) {
+  if (isset($object->cid)) {
+    $node = node_load($object->nid);
+  }
   $users = _get_user_list($node);
-  dsm($users);
   
   // Create an entry for every user in the og_mail
   // table
@@ -206,81 +229,167 @@ function _og_mail_send() {
   // First step will be to check and see when was the last time an mail
   // was sent to the specific user.
   global $user;
-  global $base_url;
   
   if (!user_access('og_mail admin')) {
     return;
   }
   
   $account = $user;
-  $params['account'] = $account;
-  drupal_mail('og_mail', 'og_mail', $account->mail, user_preferred_language($account), $params);
+  $params['account'] = $account;  
+  $params = array_merge($params, og_mail_prepare_message($account));
+  $query = db_select('og_mail', 'mail')
+          ->fields('mail', array('uid'))
+          ->distinct()
+          ->execute();
+  $uids = $query->fetchAll();
+  dsm($uids);
+  foreach($uids as $uid) {
+    $account = user_load($uid->uid);
+    $params['recipient'] = $account;
+    drupal_mail('og_mail', 'og_mail', $account->mail, user_preferred_language($account), $params);
+  }
 }
 
-function og_mail_mail($key, &$message, $params) {
+function og_mail_prepare_message($account) {
   global $base_url;
-  
-  $account = $params['account'];
-  
   // Get the list of notifications for the user
   $query = db_select('og_mail', 'mail')
           -> fields('mail', array('event_id', 'id'))
           -> condition('uid', $account->uid, '=');
   $query->join('og_mail_events', 'events', 'mail.event_id = events.id');
   $query->addField('events', 'nid');
+  $query->addField('events', 'cid');
+  $query->addField('events', 'type');
   $query->addField('events','event');
   $query->addField('events','created');
   $query_object = $query->execute();
   $notifications = $query_object->fetchAll();
-  foreach($notifications as $key => $notification) {
-    $node = node_load($notification->nid);
-    $time_interval = format_interval(time() - $node->changed, 2);
-    $author = user_load($node->uid);
-    if ($notification->event == 'create') {
-      $new_posts[$key]['@title'] = l($node->title, $base_url . '/node/' . $node->nid, array('html' => TRUE));
-      $new_posts[$key]['@author'] = $author->name;
-      $new_posts[$key]['@time'] = $time_interval;      
-    }
-    elseif ($notification->event == 'update') {
-      $updated_posts[$key]['@title'] = l($node->title, $base_url . '/node/' . $node->nid, array('html' => TRUE));
-      $updated_posts[$key]['@author'] = $author->name;
-      $updated_posts[$key]['@time'] = $time_interval;
-    }
-  }
-      
-  $message['subject'] = 'Coasts, Oceans, Ports and Rivers Institute web update';
-  $body = t("@name, \n\n", array('@name' => $account->name));
   
-  // Report new posts first
-  $body = '<div><p>';
-  if (count($new_posts) == 1) {
-    $post = $new_posts[0];
-    $body .= t("You might want to check out the following new post by @author:<br/><br/>", $new_posts[0]);
-    $body .= "<ul><li>{$post['@title']} was posted " . $post['@time'] . " ago.</li></ul>";
-  }
-  elseif (count($new_posts > 1)) {
-    $body .= t("You might want to check out the following new posts:<br/><br/>");
-    $body .= '<ul>';
-    foreach ($new_posts as $post) {
-      $body .= "<li>{$post['@title']} posted by {$post['@author']}. {$post['@time']} ago.</li>";
+  $new_posts = array();
+  $updated_posts = array();
+  $params['new'] = array();
+  $params['updated'] = array();
+  
+  if($notifications) {
+    foreach($notifications as $key => $notification) {
+      $time_interval = '';
+      if(!is_null($notification->cid)) {
+        $object = comment_load($notification->cid);
+      }
+      else {
+        $object = node_load($notification->nid);
+      }
+      $time_delta = time() - $object->changed;
+      
+      if ($time_delta < 1) {
+        $time_interval = "just now.";
+      }
+      else {
+        $time_interval = format_interval(time() - $object->changed, 2);
+      }
+      $author = user_load($object->uid);
+      if ($notification->event == 'create') {
+        if ($notification->type == 'node') {
+          $new_posts[$key]['@title'] = l($object->title, $base_url . '/node/' . $object->nid, array('html' => TRUE));
+          $new_posts[$key]['@author'] = $author->name;
+          $new_posts[$key]['@time'] = $time_interval;
+        }
+        elseif ($notification->type == 'comment') {
+          $node = node_load($object->nid);
+          $new_comments[$key]['@node_title'] = l($node->title, $base_url . '/node/' . $node->nid, array('html' => TRUE));
+          $new_comments[$key]['@comment_subject'] = l($object->subject, $base_url . '/node/' . $node->nid, array('html' => TRUE, 'fragment' => 'comment-' . $object->cid));
+          $new_comments[$key]['@author'] = $author->name;
+          $new_comments[$key]['@time'] = $time_interval;
+        }
+      }
+      elseif ($notification->event == 'update') {
+        $updated_posts[$key]['@title'] = l($object->title, $base_url . '/node/' . $object->nid, array('html' => TRUE));
+        $updated_posts[$key]['@author'] = $author->name;
+        $updated_posts[$key]['@time'] = $time_interval;
+      }
+      
     }
-    $body .= '</ul>';
   }
-  $body .= '</p><p>';
-  if (count($updated_posts) == 1) {
-    $post = $updated_posts[0];
-    $body .= t("You might want to check out the following updated post by @author,\n\n", $updated_posts[0]);
-    $body .= "<ul><li>{$post['@title']} was updated {$post['@time']} ago.</li></ul>";
-  }
-  elseif (count($new_posts > 1)) {
-    $body .= t("You might want to check out the following updated posts:<br/><br/>");
-    $body .= '<ul>';
-    foreach ($updated_posts as $post) {
-      $body .= "<li>{$post['@title']} updated by {$post['@author']} {$post['@time']} ago.</li>";
-    }
-    $body .= '</ul>';
-  }
-  $body .= '</p></div>';
-  $message['body'] = $body;
+  $params['new'] = $new_posts;
+  $params['updated'] = $updated_posts;
+  $params['comments'] = $new_comments;
+  
+  return $params;
+}
+
+function og_mail_mail($key, &$message, $params) {
+  global $base_url;
+  
+  $account = $params['account'];
+      
+  $message['subject'] = 'Coasts, Oceans, Ports and Rivers Institute web update (development)';
+  
+  $message['body'] = theme('og_mail', $params);
   $message['from']= variable_get('site_mail', 'tchase@mycopri.org');
+}
+
+function og_mail_theme($existing, $type, $theme, $path) {
+  dsm('register og_mail theme');
+  return array(
+      'og_mail' => array(
+          'variables' => array('params' => array()),
+          'template' => 'og_mail',
+      ),
+  );
+}
+
+function og_mail_preprocess_og_mail(&$variables) {
+  $new = $variables['new'];
+  $updated = $variables['updated'];
+  $comments = $variables['comments'];
+  dsm($new);
+  dsm($updated);
+  dsm($comments);
+  $notices = array();
+  if(count($new) > 1) {
+    foreach($new as $post) {
+      $notices[] = "{$post['@title']} was posted {$post['@time']} ago by {$post['@author']}.";
+    }
+    $variables['new_posts'] = theme('item_list', 
+            array(
+                'items'=>$notices, 
+                'type'=>'ul', 
+                'title'=>'You might want to check out the following new posts:',)
+    );
+  }
+  elseif (count($new) == 1) {
+    $variables['new_posts'] = "{$post['@author']} posted {$post['@title']} {$post['@time']}";
+  }
+  
+  $notices = array();  
+  if(count($updated) > 1) {
+    foreach($updated as $post) {
+      $notices[] = "{$post['@author']} updated {$post['@title']} {$post['@time']} ago.";
+    }
+    $variables['updated_posts'] = theme('item_list', 
+            array(
+                'items'=>$notices, 
+                'type'=>'ul', 
+                'title'=>'The following posts have been updated:',)
+    );  
+  }
+  elseif (count($updated) == 1) {
+    $variables['updated_posts'] = "{$post['@author']} updated {$post['@title']} {$post['@time']}";
+  }
+  
+  $notices = array();
+  if(count($comments) > 1) {
+    foreach($comments as $comment) {
+      $notices[] = "{$comment['@author']} commented on {$comment['@node_title']} {$comment['@time']}";
+    }
+    $variables['comments'] = theme('item_list', 
+            array(
+                'items'=>$notices, 
+                'type'=>'ul', 
+                'title'=>'The following comments have been made:',)
+    );
+  }
+  elseif (count($comments) == 1) {
+    $variables['comments'] = "{{$comment['@author']} commented on {$comment['@node_title']} {$comment['@time']}";
+  }
 }
