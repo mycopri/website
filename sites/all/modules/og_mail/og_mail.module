@@ -267,8 +267,10 @@ function og_mail_prepare_message($account) {
   
   $new_posts = array();
   $updated_posts = array();
+  $new_comments = array();
   $params['new'] = array();
   $params['updated'] = array();
+  $params['comments'] = array();
   
   if($notifications) {
     foreach($notifications as $key => $notification) {
