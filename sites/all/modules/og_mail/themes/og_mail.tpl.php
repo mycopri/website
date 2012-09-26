@@ -76,12 +76,11 @@
  * @see template_preprocess_node()
  * @see template_process()
  */
-dsm(get_defined_vars());
 ?>
 
 <p>
-<? print $recipient->name . ','; ?>
+<? print $recipient->name . ','; ?><br/>
 <? if (isset($new_posts)) {print $new_posts;} ?>
 <? if (isset($updated_posts)) {print $updated_posts;} ?>
-<? if (isset($comments)) {print $comments;} ?>
+<? if (isset($new_comments)) {print $new_comments;} ?>
 </p>
