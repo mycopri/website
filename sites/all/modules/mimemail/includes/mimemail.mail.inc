@@ -20,27 +20,23 @@ class MimeMailSystem implements MailSystemInterface {
    *   The formatted $message.
    */
   public function format(array $message) {
-    dsm($message);
     if (is_array($message['body'])) {
       $message['body'] = implode("\n\n", $message['body']);
     }
 
     if (preg_match('/plain/', $message['headers']['Content-Type'])) {
-      dsm(variable_get('mimemail_format', filter_fallback_format()));
       $message['body'] = check_markup($message['body'], variable_get('mimemail_format', filter_fallback_format()));
     }
 
     $engine = variable_get('mimemail_engine', 'mimemail');
     $mailengine = $engine . '_mailengine';
     $engine_prepare_message = $engine . '_prepare_message';
-    dsm($engine_prepare_message);
     if (function_exists($engine_prepare_message)) {
       $message = $engine_prepare_message($message);
     }
     else {
       $message = mimemail_prepare_message($message);
     }
-    dsm($message);
     return $message;
   }
   /**

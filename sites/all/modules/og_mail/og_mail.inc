@@ -47,7 +47,7 @@ function _og_mail_save_event($object, $type, $event) {
           -> condition('event', $event);
   
   if($type == 'comment') {
-    $query->condition('cid', $object->cid, '=');
+    $query->condition('cid', $object->cid);
   }
   $event_row = $query->execute()-> fetchAssoc();
   
