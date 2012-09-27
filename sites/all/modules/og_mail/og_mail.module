@@ -303,7 +303,7 @@ function og_mail_mail($key, &$message, $params) {
       }
       $message['body']['new_posts'] = $digest_parts['new_posts'];
       $message['body']['updated_posts'] = $digest_parts['updated_posts'];
-      $message['body']['comments'] = $digest_parts[comments];
+      $message['body']['comments'] = $digest_parts['comments'];
       $message['body']['closing'] = theme('og_mail_closing');
       return;
   }
