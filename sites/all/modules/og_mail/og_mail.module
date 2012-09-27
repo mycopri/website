@@ -257,24 +257,26 @@ function og_mail_send($key = NULL, $send = TRUE) {
   $uids = $query->fetchAll();
   
   // Assemble a list of users who have notifications
-  foreach($uids as $uid) {
-    $account = user_load($uid->uid);
-    $query = db_select('og_mail_user', 'og')
-            ->fields('og', array('uid', 'timestamp'))
-            ->condition('uid', $account->uid)
-            ->execute();
-    $row = $query->fetchAssoc();
-    $recipients[$account->uid] = $account;
-  }
-  
-  // Loop through each of the users and send the notifictions
-  $from = variable_get('og_from_mail', variable_get('site_mail'));
-  $language = user_preferred_language($account);
-  foreach($recipients as $uid => $account) {
-    $params['account'] = $account;
-    $params['digest'] = og_mail_digest($account);
-    if ($params['digest']) {
-      $result = drupal_mail('og_mail', $key, $account->mail, $language, $params, $send);
+  if($uids) {
+    foreach($uids as $uid) {
+      $account = user_load($uid->uid);
+      $query = db_select('og_mail_user', 'og')
+              ->fields('og', array('uid', 'timestamp'))
+              ->condition('uid', $account->uid)
+              ->execute();
+      $row = $query->fetchAssoc();
+      $recipients[$account->uid] = $account;
+    }
+
+    // Loop through each of the users and send the notifictions
+    $from = variable_get('og_from_mail', variable_get('site_mail'));
+    $language = user_preferred_language($account);
+    foreach($recipients as $uid => $account) {
+      $params['account'] = $account;
+      $params['digest'] = og_mail_digest($account);
+      if ($params['digest']) {
+        $result = drupal_mail('og_mail', $key, $account->mail, $language, $params, $send);
+      }
     }
   }
 }
