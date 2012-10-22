@@ -1,0 +1,6 @@
+CHANGELOG for Content Complete 1 for Drupal 7
+
+Content Complete 1.4-beta2, 2011-10-4
+--------------------------------
+- Issue #1299064 by Steven Jones: Fixed check for emptiness field
+- Issue #1299078 by Steven Jones: Fixed bulk rebuild
