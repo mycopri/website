@@ -1,6 +1,6 @@
 <div class="row">
   <?php if ($linked_site_name || $linked_logo): ?>
-    <div class="two columns text-left">
+    <div class="two columns">
       <?php if ($linked_logo): ?>
         <?php print $linked_logo; ?>
       <?php endif; ?>
@@ -44,7 +44,7 @@
 <?php endif; ?>
 <div class="row">
   <div id="main" class="<?php print $main_grid; ?> columns">
-    <?php if ($breadcrumb): print $breadcrumb; endif; ?>  
+    <?php if ($breadcrumb): print $breadcrumb; endif; ?>
     <?php if ($messages): print $messages; endif; ?>
     <?php if (!empty($page['help'])): print render($page['help']); endif; ?>
     <?php if (!empty($page['highlighted'])): ?>
@@ -102,9 +102,8 @@
 <?php endif; ?>
 <div class="bottom-bar panel">
   <div class="row">
-    <div class="twelve columns text-center">
-       <p>An Institute of the American Society of Civil Engineers<br><a href="http://www.asce.org/lib/copyright/copy.cfm" target="_blank">Copyright© 2009 - 2013</a>&nbsp;| <a href="http://www.asce.org/lib/copyright/privacy.cfm" target="_blank">Privacy </a>| <a href="http://www.asce.org/lib/copyright/legal.cfm" target="_blank">Terms and Conditions</a></p>        
-      <span>Powered by <a href="http://drupal.org">Drupal</a></span>  
+    <div class="twelve columns">
+      &copy; <?php print date('Y') . ' ' . check_plain($site_name) . ' ' . t('All rights reserved.'); ?>
     </div>
   </div>
 </div>
