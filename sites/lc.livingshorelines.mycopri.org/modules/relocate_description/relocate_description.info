@@ -1,9 +1,0 @@
-name = Customize Description
-description = Allows administrators to customize where the description text of a form element will appear in a form element.
-package = ASCE
-version = VERSION
-core = 7.x
-
-
-
-
