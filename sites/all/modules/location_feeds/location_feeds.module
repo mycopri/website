@@ -32,13 +32,7 @@ function location_feeds_feeds_processor_targets_alter(&$targets, $entity_type, $
     }
 
     // Location cck logic.
-    if (module_exists('location_cck')) {
-      $fields = field_read_fields(array('module' => 'location_cck'));
-      $location_fields = _location_feeds_fields();
-      foreach ($fields as $field_name => $field) {
-        _location_feeds_fill_targets($targets, 'location_cck', $field_name, $location_fields);
-      }
-    }
+
   }
   else if ($entity_type == 'user') {
     $settings = variable_get('location_settings_user', array());
@@ -46,7 +40,14 @@ function location_feeds_feeds_processor_targets_alter(&$targets, $entity_type, $
     // Only add fields when collecting locations
     if (isset($settings['multiple']['max']) && $settings['multiple']['max'] > 0) {
       _location_feeds_location($targets, $settings);
-    }
+     }      
+  }
+  if (module_exists('location_cck')) {
+    $fields = field_read_fields(array('module' => 'location_cck'));
+    $location_fields = _location_feeds_fields();
+    foreach ($fields as $field_name => $field) {
+      _location_feeds_fill_targets($targets, 'location_cck', $field_name, $location_fields);
+     }
   }
 }
 

@@ -1,0 +1,128 @@
+<?php
+/**
+ * @file
+ * Implement socialshare support for Drupal
+ */
+ 
+/**
+ * Implements hook_theme().
+ */
+function socialloginandsocialshare_share_theme() {
+  return array(
+   'socialloginandsocialshare_social_share' => array(
+      'variables' => array(
+        'node' => NULL,
+      ),
+    ),
+  );
+}
+
+/**
+ * Theme social share.
+ */
+function theme_socialloginandsocialshare_social_share($node) {
+  $output = "";
+  $item = menu_get_object($type = 'node', $position = 1, $path = NULL);
+  $item_nid = (!empty($item->nid) ? $item->nid : "");
+  $item_title = (!empty($item->title) ? $item->title : "");
+  $shareall_withexcept = variable_get('socialshare_show_pages');
+  $node_withexcept = variable_get('socialshare_show_exceptpages');
+  $node_except = explode(',', $node_withexcept);
+  $selected_share_interface=variable_get('socialloginandsocialshare_selected_share_interface');
+  $providers = implode('","', variable_get('socialloginandsocialshare_rearrange_providers_list'));
+  if ($selected_share_interface == "vertical") {
+      $interface='Simplefloat';
+     if (variable_get('socialloginandsocialshare_share_vertical_images') == '4') {
+       $size='32';
+     }
+     else {
+       $size='16';
+     }
+   }
+   else {
+    if (variable_get('socialloginandsocialshare_share_horizontal_images') == '0' || variable_get('socialloginandsocialshare_share_horizontal_images') == '1') {
+      $interface='horizontal';
+     }
+     else {
+       $interface='simpleimage';
+     }
+     if (variable_get('socialloginandsocialshare_share_horizontal_images') == '0' || variable_get('socialloginandsocialshare_share_horizontal_images') == '2') {
+       $size='32';
+     }
+     else {
+       $size='16';
+     }
+   
+   }
+   $api_key = trim(variable_get('socialloginandsocialshare_apikey'));
+   $share_script = '<script type="text/javascript">var islrsharing = true; var islrsocialcounter = true;</script> <script type="text/javascript" src="//share.loginradius.com/Content/js/LoginRadius.js" id="lrsharescript"></script> <script type="text/javascript">LoginRadius.util.ready(function () { $i = $SS.Interface.' . $interface . '; $SS.Providers.Top = ["' . $providers . '"]; $u = LoginRadius.user_settings; $u.apikey= \'' . trim( $api_key ) . '\'; $i.size = ' . $size . ';';
+   if ($selected_share_interface=="vertical" ) {
+     if (variable_get('socialshare_vertical_position') == '0') {
+       $position1 = 'top';
+       $position2 = 'left';
+     }
+     elseif (variable_get('socialshare_vertical_position') == '1') {
+       $position1 = 'top';
+       $position2 = 'right';
+     }
+     elseif (variable_get('socialshare_vertical_position')=='2') {
+       $position1 = 'bottom';
+       $position2 = 'left';
+     }
+     else {
+       $position1 = 'bottom';
+       $position2 = 'right';
+     }
+     $sharing_offset = variable_get('socialshare_vertical_topweight');
+     if (isset($sharing_offset) && trim($sharing_offset) != "" && is_numeric($sharing_offset)) {
+       $share_script .= '$i.top = \'' . trim($sharing_offset) . 'px\'; $i.' . $position2 . ' = \'0px\';$i.show("lrsharecontainer"); });';
+     }
+     else {
+       $share_script .= '$i.' . $position1 . ' = \'0px\'; $i.' . $position2 . ' = \'0px\';$i.show("lrsharecontainer"); });';
+     }
+   }
+   else {
+     $share_script .= '$i.show("lrsharecontainer"); });';
+   }
+   $share_script = str_replace('<script type="text/javascript">var islrsharing', 'var islrsharing', $share_script);
+   $share_script = str_replace('}); </script>', '});', $share_script);
+   $ishorizontal = strpos($share_script, 'horizontal');
+   $share_title = (($ishorizontal !== FALSE) ? variable_get('socialshare_label_string') : "");
+   if (variable_get('socialloginandsocialshare_enable_share') == 1) {
+     drupal_add_js($share_script, array('type' => 'inline', 'scope' => 'header', 'weight' => 5));
+     if ($shareall_withexcept == 0) {
+       if (!in_array($item_nid, $node_except) AND !in_array($item_title, $node_except)) {
+         $output = '<div><div>' . $share_title . '</div><div class="lrsharecontainer"></div></div';
+       }
+     }
+     elseif ($shareall_withexcept == 1) {
+       if (in_array($item_nid, $node_except) OR in_array($item_title, $node_except)) {
+         $output = '<div><div>' . $share_title . '</div><div class="lrsharecontainer"></div></div>';
+       }
+     }
+   }
+   return $output;
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function socialloginandsocialshare_share_node_view($node, $view_mode, $langcode) {
+ $api_key = trim(variable_get('socialloginandsocialshare_apikey'));
+  if (!empty($api_key)) {
+    if (variable_get('socialloginandsocialshare_enable_share') == 1) {
+      if (variable_get('socialshare_position_top', 1)) {
+        $node->content['socialshare_top'] = array(
+          '#markup' => theme('socialloginandsocialshare_social_share', array('node' => $node)), 
+          '#weight' => -10, 
+        );
+      }
+      if (variable_get('socialshare_position_bottom', 1)) {
+        $node->content['socialshare'] = array(
+          '#markup' => theme('socialloginandsocialshare_social_share', array('node' => $node)), 
+          '#weight' => 10, 
+        );
+      }
+    }
+  }
+}

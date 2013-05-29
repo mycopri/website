@@ -1,0 +1,16 @@
+<?php
+
+
+function act_feed_menu() {
+  $items['testing-feed'] = array(
+    'title' => 'testing feed',
+    'description' => 'the testing of the feed',
+    'page callback' => 'act_feed_build',
+  );
+  return $items;
+}
+
+function act_feed_build() {
+  return 'hey there!';
+
+}

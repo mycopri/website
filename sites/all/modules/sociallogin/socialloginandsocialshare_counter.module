@@ -1,0 +1,131 @@
+<?php
+/**
+ * @file
+ * Implement socialcounter support for Drupal
+ */
+ 
+/**
+ * Implements hook_theme().
+ */
+function socialloginandsocialshare_counter_theme() {
+  return array(
+   'socialloginandsocialshare_social_counter' => array(
+      'variables' => array(
+        'node' => NULL,
+      ),
+    ),
+  );
+}
+
+/**
+ * Theme social share.
+ */
+function theme_socialloginandsocialshare_social_counter($node) {
+  $output = "";
+  $item = menu_get_object($type = 'node', $position = 1, $path = NULL);
+  $item_nid = (!empty($item->nid) ? $item->nid : "");
+  $item_title = (!empty($item->title) ? $item->title : "");
+  $counterall_withexcept = variable_get('socialcounter_show_pages');
+  $interface = 'simple';
+  $providers = implode('","', variable_get('socialshare_counter_show_providers_list'));
+  $selected_counter_interface=variable_get('socialloginandsocialshare_selected_counter_interface');
+    if ($selected_counter_interface == "vertical") {
+      $isHorizontal = "false";
+      if (variable_get('socialloginandsocialshare_counter_vertical_images') == '2') {
+        $type = 'vertical';
+      }
+      else {
+        $type = 'horizontal';
+      }
+    }
+    else {
+      $isHorizontal = "true";
+      if (variable_get('socialloginandsocialshare_counter_horizontal_images') == '0') {
+        $type = 'vertical';
+      }
+      else {
+        $type = 'horizontal';
+      }
+   
+    }
+    $counter_script = '<script type="text/javascript">var islrsharing = true; var islrsocialcounter = true;</script> <script type="text/javascript" src="//share.loginradius.com/Content/js/LoginRadius.js" id="lrsharescript"></script> <script type="text/javascript">LoginRadius.util.ready(function () { $SC.Providers.Selected = ["' . $providers . '"]; $S = $SC.Interface.' . $interface . '; $S.isHorizontal = ' . $isHorizontal . '; $S.countertype = \'' . $type . '\';';
+   if ($selected_counter_interface == "vertical") {
+     if (variable_get('socialshare_counter_vertical_position') == '0') {
+       $position1 = 'top';
+       $position2 = 'left';
+     }
+     elseif (variable_get('socialshare_counter_vertical_position') == '1') {
+       $position1 = 'top';
+       $position2 = 'right';
+     }
+     elseif (variable_get('socialshare_counter_vertical_position')=='2') {
+       $position1 = 'bottom';
+       $position2 = 'left';
+     }
+     else {
+       $position1 = 'bottom';
+       $position2 = 'right';
+     }
+     $counter_offset=variable_get('socialshare_counter_vertical_topweight');
+     if (isset($counter_offset) && trim($counter_offset) != "" && is_numeric($counter_offset)) {
+       $counter_script .= '$S.top = \'' . trim($counter_offset) . 'px\'; $S.' . $position2 . ' = \'0px\';$S.show("lrcounter_simplebox"); });';
+     }
+     else {
+       $counter_script .='$S.' . $position1 . ' = \'0px\'; $S.' . $position2 . ' = \'0px\';$S.show("lrcounter_simplebox"); });';
+     }
+   }
+   else {
+     $counter_script .= '$S.show("lrcounter_simplebox"); });';
+   }
+   $counter_script = str_replace('<script type="text/javascript">var islrsharing', 'var islrsharing', $counter_script);
+   $counter_script = str_replace('}); </script>', '});', $counter_script);
+   $node_withexcept = variable_get('socialcounter_show_exceptpages');
+   $node_except = explode(',', $node_withexcept);
+   $ischorizontal = strpos($counter_script, 'isHorizontal = true');
+   $counter_title = (($ischorizontal !== FALSE) ? variable_get('socialcounter_label_string') : "");
+   if (variable_get('socialloginandsocialshare_enable_counter') == 1) {
+    drupal_add_js($counter_script, array('type' => 'inline', 'scope' => 'header', 'weight' => 5));
+    if ($counterall_withexcept == 0) {
+      if (!in_array($item_nid, $node_except) AND !in_array($item_title, $node_except)) {
+        $output = '<div><div>' . $counter_title . '</div><div class="lrcounter_simplebox"></div></div>';
+      }
+    }
+    elseif ($counterall_withexcept == 1) {
+      if (in_array($item_nid, $node_except) OR in_array($item_title, $node_except)) {
+        $output = '<div><div>' . $counter_title . '</div><div class="lrcounter_simplebox"></div></div>';
+      }
+    }
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function socialloginandsocialshare_counter_node_view($node, $view_mode, $langcode) {
+ if (variable_get('socialloginandsocialshare_enable_counter') == 1) {
+   $selected_counter_interface=variable_get('socialloginandsocialshare_selected_counter_interface');
+   if ($selected_counter_interface == "vertical") {
+     if (variable_get('socialcounter_position_top', 1) || variable_get('socialcounter_position_bottom', 1)) {
+       $node->content['socialcounter_top'] = array(
+         '#markup' => theme('socialloginandsocialshare_social_counter', array('node' => $node)), 
+         '#weight' => -10, 
+        );
+      }
+    }
+    else {
+      if (variable_get('socialcounter_position_top', 1)) {
+        $node->content['socialcounter_top'] = array(
+         '#markup' => theme('socialloginandsocialshare_social_counter', array('node' => $node)), 
+         '#weight' => -10, 
+        );
+      }
+      if (variable_get('socialcounter_position_bottom', 1)) {
+        $node->content['socialcounter'] = array(
+          '#markup' => theme('socialloginandsocialshare_social_counter', array('node' => $node)), 
+          '#weight' => 10, 
+        );
+      }
+    }
+  }
+}

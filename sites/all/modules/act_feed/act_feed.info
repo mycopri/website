@@ -1,0 +1,5 @@
+name = Custom Activity Feed
+description = Provides a custome user activity feed
+
+core = 7.x
+

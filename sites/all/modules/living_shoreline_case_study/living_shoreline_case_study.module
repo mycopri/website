@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the living_shoreline_case_study feature.
+ */
+
+include_once 'living_shoreline_case_study.features.inc';
