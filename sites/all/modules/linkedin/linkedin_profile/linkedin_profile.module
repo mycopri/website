@@ -119,9 +119,8 @@ function linkedin_profile_user_load($users) {
                 $items[] = theme('linkedin_profile_user_page_' . $multiples[$key] . '_item', $variables);
               }
               else {
-                //iterate
                 foreach ($items_val as $item_val) {
-                  $variables[$multiples[$key]] = $items_val;
+                  $variables[$multiples[$key]] = $item_val;
                   $items[] = theme('linkedin_profile_user_page_' . $multiples[$key] . '_item', $variables);
                 }
               }

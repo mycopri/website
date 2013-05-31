@@ -101,27 +101,24 @@ function linkedin_auth_form_alter(&$form, &$form_state, $form_id) {
  * Implements hook_block_info().
  */
 function linkedin_auth_block_info() {
-  if (variable_get('linkedin_auth_login_block', 0) == 1) {
-    $blocks['linkedin_auth_login_block'] = array(
-      'info' => t('Login using LinkedIn'),
-      'title' => t('LinkedIn Login'),
-    );
-    return $blocks;
-  }
+  $blocks['linkedin_auth_login_block'] = array(
+    'info' => t('Login using LinkedIn'),
+    'title' => t('LinkedIn Login'),
+  );
+  return $blocks;
 }
 
 /**
- * Implements hook_block_info().
+ * Implements hook_block_view().
  */
 function linkedin_auth_block_view($delta = '') {
   //No check on delta, we have only one block.
-  if (variable_get('linkedin_auth_login_block', 0) == 1 && user_is_anonymous()) {
+  if (user_is_anonymous()) {
     $content = theme('linkedin_auth_display_login_block_button', array('display' => 'linkedin_login_block'));
     $block['subject'] = t('Subject');
     $block['content'] = $content;
     return $block;
   }
-  return;
 }
 
 /*

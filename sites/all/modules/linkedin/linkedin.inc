@@ -205,7 +205,7 @@ function _linkedin_get_profile_fields($uid, $fields = array()) {
     $append = '~:public';
     $append .= _linkedin_build_fields_request($fields, 'public');
     $url = $base_url . $append;
-    $response = linkedin_get_fields($url, $tokens, $flat);
+    $response = linkedin_get_fields($url, $tokens);
   }
   if (isset($response['person'])) {
     $response = $response['person'];

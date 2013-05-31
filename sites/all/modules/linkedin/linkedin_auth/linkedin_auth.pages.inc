@@ -31,11 +31,6 @@ function linkedin_auth_linkedin_admin_page() {
     '#title' => 'Display LinkedIn login link on login page form',
     '#default_value' => variable_get('linkedin_auth_login_link_on_page', '0'),
   );
-  $form['linkedin_auth']['linkedin_auth_login_block'] = array(
-    '#type' => 'checkbox',
-    '#title' => 'Provides a seperate "Linkedin login block"',
-    '#default_value' => variable_get('linkedin_auth_login_block', '0'),
-  );
   $form['linkedin_auth']['linkedin_auth_bypass_register_checks'] = array(
     '#type' => 'checkbox',
     '#title' => t('Bypass user mail verification or administrator approval for user registering through LinkedIn'),

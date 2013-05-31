@@ -97,8 +97,8 @@ function linkedin_user_enable_form($form, $form_state, $uid) {
   $form['#action'] = url('linkedin/token/' . $uid);
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Go LinkedIn'),
-    '#suffix' => '<p class="description">' . t('You will be taken to LinkedIn website in order to complete the process.') . '</p>',
+    '#value' => t('Go to LinkedIn'),
+    '#suffix' => '<p class="description">' . t('You will be taken to the LinkedIn website in order to complete the process.') . '</p>',
   );
   return $form;
 }

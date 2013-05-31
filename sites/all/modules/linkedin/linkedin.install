@@ -79,3 +79,10 @@ function linkedin_requirements($phase) {
   }
   return $requirements;
 }
+
+/**
+ * Remove unused variable linkedin_auth_login_block.
+ */
+function linkedin_update_7100() {
+  variable_del('linkedin_auth_login_block');
+}
