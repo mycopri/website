@@ -1,15 +1,22 @@
 <div class="row">
   <?php if ($linked_site_name || $linked_logo): ?>
-    <div class="two columns text-left">
+    <div style="padding-top: 15px" class="two mobile-one columns text-left">
       <?php if ($linked_logo): ?>
         <?php print $linked_logo; ?>
       <?php endif; ?>
     </div>
-    <div class="ten columns text-left">
+    <div style="padding-top: 30px" class="ten mobile-three columns hide-for-small text-left">
       <?php if ($is_front): ?>
-        <h1 id="site-name"><?php print $linked_site_name; ?></h1>
+        <h1 style="font-size: 32px" id="site-name "><strong><?php print $linked_site_name; ?></h1>
       <?php else: ?>
-        <div id="site-name"><?php print $linked_site_name; ?></div>
+        <div style="font-size: 32px" id="site-name"><strong><?php print $linked_site_name; ?></div>
+      <?php endif; ?>
+    </div>
+    <div style="padding-top: 30px" class="ten mobile-three columns show-for-small text-left">
+      <?php if ($is_front): ?>
+        <h1 style="font-size: 21px" id="site-name "><?php print $linked_site_name; ?></h1>
+      <?php else: ?>
+        <div style="font-size: 21px" id="site-name"><?php print $linked_site_name; ?></div>
       <?php endif; ?>
     </div>
   <?php endif; ?>
@@ -103,8 +110,7 @@
 <div class="bottom-bar panel">
   <div class="row">
     <div class="twelve columns text-center">
-       <p>An Institute of the American Society of Civil Engineers<br><a href="http://www.asce.org/lib/copyright/copy.cfm" target="_blank">Copyright© 2009 - 2013</a>&nbsp;| <a href="http://www.asce.org/lib/copyright/privacy.cfm" target="_blank">Privacy </a>| <a href="http://www.asce.org/lib/copyright/legal.cfm" target="_blank">Terms and Conditions</a></p>        
-      <span>Powered by <a href="http://drupal.org">Drupal</a></span>  
+       An Institute of the American Society of Civil Engineers<br><a href="http://www.asce.org/lib/copyright/copy.cfm" target="_blank">Copyright© 2009 - 2013</a>&nbsp;| <a href="http://www.asce.org/lib/copyright/privacy.cfm" target="_blank">Privacy </a>| <a href="http://www.asce.org/lib/copyright/legal.cfm" target="_blank">Terms and Conditions</a>
     </div>
   </div>
 </div>

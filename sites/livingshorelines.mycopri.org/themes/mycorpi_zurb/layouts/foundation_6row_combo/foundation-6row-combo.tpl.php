@@ -44,11 +44,11 @@
     </div>
   </div>
   <div class="row">
-    <div class="three columns">
-      <?php print $content['middle_small']; ?>
-    </div>
-    <div class="nine columns">
+    <div class="eight columns">
       <?php print $content['middle_large']; ?>
+    </div>
+    <div class="four columns">
+      <?php print $content['middle_small']; ?>
     </div>
   </div>
   <div class="row">

@@ -572,8 +572,7 @@ class FieldInfo {
       $widget['type'] = $field_type_info['default_widget'];
       $widget_type_info = field_info_widget_types($widget['type']);
     }
-    $widget['module'] = isset($widget_type_info['module']) ? $widget_type_info['module']: NULL;
-    // $widget['module'] = $widget_type_info['module'];
+    $widget['module'] = $widget_type_info['module'];
     // Fill in default settings for the widget.
     $widget['settings'] += field_info_widget_settings($widget['type']);
 
