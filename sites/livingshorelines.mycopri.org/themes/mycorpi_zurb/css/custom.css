@@ -196,6 +196,9 @@ ul.menu li.first a {
 #site-name a {
 	color:#002675;
 }
+table tr .views-field-contextual-links {
+position: relative;
+}
 .node-type-living-shoreline-case-study fieldset.collapsible {
 	position:relative;
 	padding-top:35px;
