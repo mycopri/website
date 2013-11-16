@@ -102,12 +102,14 @@ code {
 	background: #ffff99;
 }
 .node-type-post .user-picture,
+.node-type-advpoll .user-picture,
 .comment-wrapper .user-picture {
 	float:left;
 	margin:0 20px 0 0;
 }
 
-.node-type-post .pane-node-comments .pane-title {
+.node-type-post .pane-node-comments .pane-title,
+.node-type-advpoll .pane-node-comments .pane-title {
 	padding-bottom:15px;
 	border-bottom:1px solid #ddd;
 }
@@ -131,7 +133,8 @@ code {
 	border-bottom:1px solid #ddd;
 }
 
-.node-type-post .submitted {
+.node-type-post .submitted,
+.node-type-advpoll .submitted {
 	font-size:12px;
 	margin-bottom:10px;
 }
@@ -250,4 +253,57 @@ position: relative;
 	background:url(../images/pre-project_conditions-1.jpg) no-repeat 9px 10px;
 	min-height:265px;
 	padding-left:266px;
+}
+
+/* list section removes the links from printing pages from browser  */
+@media print {
+  * {
+    color: #000 !important;
+    text-shadow: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+  a[href]:after {
+    content: "";
+  }
+  abbr[title]:after {
+    content: "";
+  }
+  .ir a:after,
+  a[href^="javascript:"]:after,
+  a[href^="#"]:after {
+    content: "";
+  }
+  pre,
+  blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  img {
+    page-break-inside: avoid;
+  }
+  img {
+    max-width: 100% !important;
+  }
+  @page  {
+    margin: 0.5cm;
+  }
+  p,
+  h2,
+  h3 {
+    orphans: 3;
+    widows: 3;
+  }
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
 }

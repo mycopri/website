@@ -34,7 +34,7 @@ function advpoll_render($subtype, $conf, $panel_args, $context) {
   $block->title   = $type->title_label;
   $block->delta   = $node->nid;
   $data = advpoll_get_data($node);
-  if ($data->behavior == 'approval' || $data->behavior == 'pool') {
+  if ($data->behavior == 'approval' || $data->behavior == 'pool')  {
     drupal_add_css(drupal_get_path('module', 'advpoll') . '/css/advpoll.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
 // check for eligibility to vote
     if (advpoll_user_eligibility($node)) {
