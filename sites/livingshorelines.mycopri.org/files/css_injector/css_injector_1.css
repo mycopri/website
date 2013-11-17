@@ -1,0 +1,7 @@
+#block-system-main .form-type-radio {
+  float:left;
+  padding-right:40px;
+}
+#block-system-main label{clear:both;}
+
+#block-system-main .form-item{padding-top:0px;}
